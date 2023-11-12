@@ -6,7 +6,6 @@ This is a hybrid Slash/Prefix Command Bot designed to run Mafia in nearly any fo
 
 Most commands come in both Slash and Prefix forms, but due to benefits and restrictions exclusive to Slash Commands, some commands are only available in one form or another.
 
-﻿-------------------------------------------------------------------------------------------------------------
 Structures
 -------------------------------------------------------------------------------------------------------------
 
@@ -16,7 +15,6 @@ Each new Structure adds a /register, /list, and /rand Guild Slash Command for th
 
 For Grand Idea Games, you may allow regular users to submit new commands using the /user_submission command.
 
--------------------------------------------------------------------------------------------------------------
 Making your own Grand Mafia Bot
 -------------------------------------------------------------------------------------------------------------
 
