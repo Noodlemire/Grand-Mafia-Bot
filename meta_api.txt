@@ -1,0 +1,27 @@
+adminOnly: Boolean
+	- If true, the command can only be accessed by someone with administrative level permissions.
+	- This has a special behavior in Command Lists; Admin-only commands are shown in red, instead of the usual white.
+
+ephemeral: Boolean
+	- Only affects Slash Commands. Prefix Commands can't be Ephemeral.
+	- When applied, the command's reply message becomes visible only to the user of the command.
+
+minArgs: Number
+	- Specifies the minimum number of required parameters for a command.
+	- If someone attempts to use the command with fewer than the required number of arguments, an error message will be provided.
+	- The error message is auto-generated based on the name of the command typed, and the command's "param" field.
+
+shortDesc: String
+	- If present, this is used for the Slash Command description to separate it from the Help Description
+	- This is because the Slash Command Description has a limit of 100 characters, while the Help Description's limit is 4000
+
+slashOnly: Boolean
+	- If true, command is only usable in its Slash Command form.
+	- Its Prefix Command form technically exists, but trying to use it only results in an error message.
+
+SlashOpts: Array<Object<datatype:String, oname:String, func:Function(str)>>
+	- Defines the Slash Command Option List, visible as users type out the Slash version of the command.
+	- Each Object in the Array is its own individual Option. Order is preserved.
+	- datatype: Can be Attachment, Boolean, Channel, Integer, Mentionable, Number, Role, or String.
+	- oname: Name of the Option. Must be lowercase alphanumeric, use - or _ in place of spaces, and 32 characters or less.
+	- func: Additional functions for the SlashCommandBuilder, such as setDescription, setMinLength, setMaxValue, etc.
