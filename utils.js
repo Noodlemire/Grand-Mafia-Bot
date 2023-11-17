@@ -117,11 +117,12 @@ module.exports = (g) =>
 		}
 	}
 
-	UTILS.embed = (s, e) =>
+	UTILS.embed = (s, e_) =>
 	{
+		let e = e_.data;
 		let auth = (e.author ? e.author.name : "");
 		let sum = auth.length;
-		let embeds = [e];
+		let embeds = [e_];
 		let pages = [{fields: [], sum: 0}];
 		let curPage = 0;
 		let sumPage = 0;
@@ -164,7 +165,7 @@ module.exports = (g) =>
 
 		if(pages.length > 1)
 		{
-			e.setFields(pages[0].fields);
+			e_.setFields(pages[0].fields);
 			embeds[1] = new EmbedBuilder();
 			embeds[1].setColor(e.color);
 			embeds[1].setDescription("Page 1 of " + pages.length);
@@ -181,7 +182,7 @@ module.exports = (g) =>
 				new ButtonBuilder({customId: "__utils:last", style: ButtonStyle.Primary, label: "Last Page", emoji: "⏩"}),
 			]});
 
-			if(line + t.length + CONTENT_LIMIT >= txt.length)
+			if(pages.length === 2)
 				buttons.components[3].setDisabled(true);
 		}
 
@@ -201,7 +202,7 @@ module.exports = (g) =>
 		let sfunc = s.deferred ? "editReply" : "reply";
 		if(!s[sfunc]) sfunc = "send";
 
-		s[sfunc](eObj).then(cb);
+		s[sfunc](eObj).catch(console.error).then(cb);
 	}
 
 	UTILS.fillArr = (...vals) =>
@@ -461,11 +462,11 @@ module.exports = (g) =>
 				let msgObj = {content: message, allowedMentions: {repliedUser: false}, fetchReply: true};
 
 				if(src.deferred)
-					src.editReply(msgObj);
+					src.editReply(msgObj).catch(console.error);
 				else if(src.reply)
-					src.reply(msgObj);
+					src.reply(msgObj).catch(console.error);
 				else
-					src.send(msgObj);
+					src.send(msgObj).catch(console.error);
 			}
 		}
 		else
@@ -479,7 +480,7 @@ module.exports = (g) =>
 				let sfunc = src.deferred ? "editReply" : "reply";
 				if(!src[sfunc]) sfunc = "send";
 
-				return src[sfunc]({content: menu.list[0] + "\nPage 1 of " + menu.list.length, components: [menu.buttons], allowedMentions: {repliedUser: false}, fetchReply: true}).then((sent) =>
+				return src[sfunc]({content: menu.list[0] + "\nPage 1 of " + menu.list.length, components: [menu.buttons], allowedMentions: {repliedUser: false}, fetchReply: true}).catch(console.error).then((sent) =>
 				{
 					menu.message = sent;
 					menus[sent.id] = menu;
@@ -667,12 +668,14 @@ module.exports = (g) =>
 		menu.buttons.components[3].setDisabled(menu.page >= menu.list.length-1);
 
 		if(menu.type === "text")
-			interaction.update({components: [menu.buttons], content: menu.list[menu.page-1] + "\nPage " + menu.page + " of " + menu.list.length});
+			interaction.update({components: [menu.buttons], content: menu.list[menu.page-1] + "\nPage " + menu.page + " of " + menu.list.length}).catch(console.error);
 		else
 		{
-			menu.message.embeds[0].setFields(menu.list[menu.page-1]);
-			menu.message.embeds[1].setDescription("Page " + menu.page + " of " + menu.list.length);
-			interaction.update({components: [menu.buttons], embeds: menu.message.embeds});
+			let embeds = [new EmbedBuilder(menu.message.embeds[0]), new EmbedBuilder(menu.message.embeds[1])];
+
+			embeds[0].setFields(menu.message.embeds[0].fields = menu.list[menu.page-1]);
+			embeds[1].setDescription(menu.message.embeds[1].description = "Page " + menu.page + " of " + menu.list.length);
+			interaction.update({components: [menu.buttons], embeds}).catch(console.error);
 		}
 
 		menu.time = new Date().getTime();

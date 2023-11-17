@@ -159,8 +159,8 @@ Single Line Field Name: Single Line Info Here
 
 		let sets = message.content.split(/\n\s*\n/);
 		
-		let postNo = "?";
-		let title = "???";
+		let postNo = "";
+		let title = "";
 		let desc = "";
 		let aliasLib = {};
 		let params = [];
@@ -168,6 +168,7 @@ Single Line Field Name: Single Line Info Here
 		let color = null;
 		let iconURL = null;
 		let imageURL = null;
+		let meta = {};
 		
 		let field = null;
 		let cont = 0;
@@ -186,11 +187,12 @@ Single Line Field Name: Single Line Info Here
 			{
 				let line = lines[n].trim();
 
-				if(line.substring(0, 2) === "**" && title === "???")
+				if(line.substring(0, 2) === "**" && title === "")
 				{
+					line = line.replace(/\*\*\*/g, "**");
 					let [t, data] = UTILS.split(line.substring(2), "**");
 
-					title = t.substring(0, 256);
+					title = t.substring(0, 256).trim();
 
 					let alias_base = UTILS.toArgName(title);
 					let alias_ext = UTILS.toArgName(title, true);
@@ -238,7 +240,8 @@ Single Line Field Name: Single Line Info Here
 
 					if(data)
 					{
-						let words = UTILS.split(data.trim().substring(1, data.length-2), " ");
+						data = data.trim();
+						let words = UTILS.split(data.substring(1, data.length-1), " ");
 
 						for(let t = 0; t < words.length; t++)
 						{
@@ -251,7 +254,7 @@ Single Line Field Name: Single Line Info Here
 						}
 					}
 				}
-				else if(auto.epn && postNo === "?")
+				else if(auto.epn && postNo === "")
 				{
 					let words = UTILS.split(line, " ");
 
@@ -264,7 +267,7 @@ Single Line Field Name: Single Line Info Here
 						}
 					}
 
-					if(postNo !== "?")
+					if(postNo !== "")
 					{
 						aliasLib[postNo] = true;
 
@@ -294,7 +297,7 @@ Single Line Field Name: Single Line Info Here
 					}
 					else if(UTILS.isOneOf(akey, "color_hex", "colorhex", "color"))
 					{
-						color = value || "undefined";
+						color = (value || "undefined").toLowerCase();
 
 						if(color[0] === "#") color = color.substring(1);
 					}
@@ -306,7 +309,7 @@ Single Line Field Name: Single Line Info Here
 					{
 						let words = UTILS.split(value, " ");
 
-						for(let t = 0; t < words.length; t++)																										
+						for(let t = 0; t < words.length; t++)										
 							aliasLib[words[t]] = true;
 					}
 					else
@@ -321,7 +324,7 @@ Single Line Field Name: Single Line Info Here
 						cont = 0;
 
 						if(value)
-							f.value = value.trim();
+							f.value = value;
 
 						while(f.value.length > 1024)
 						{
@@ -341,8 +344,20 @@ Single Line Field Name: Single Line Info Here
 						{
 							let key = field.name;
 							field.name += HELP[cont] + ":";
-							cont = Math.min(cont+1, HELP.length-1);
-							fields[fields.length] = field;
+
+							if(field.value.length > 0)
+							{
+								cont = Math.min(cont+1, HELP.length-1);
+								fields[fields.length] = field;
+							}
+
+							while(line.length > 1024)
+							{
+								fields[fields.length] = {name: key + HELP[cont] + ":", value: line.substring(0, 1024)};
+								cont = Math.min(cont+1, HELP.length-1);
+								line = line.substring(1024);
+							}
+
 							let f = {name: key, value: line};
 
 							while(f.value.length > 1024)
@@ -380,12 +395,17 @@ Single Line Field Name: Single Line Info Here
 		let deferr = "<@" + message.author.id + ">";
 		let error = deferr;
 						    
-		if(postNo !== "?")
+		if(postNo !== "")
+		{
 			desc = "Post " + postNo + (desc.length > 0 ? "\n" + desc.substring(0, desc.length-1) : "");
+
+			if(parseInt(postNo, 10) <= 0)
+				meta.cannot_spawn = "true";
+		}
 		else if(auto.epn)
 			error += "\n- Missing post number";
 
-		if(title === "???")
+		if(title === "")
 			error += "\n- Missing or malformatted Title";
 
 		if(color && (color === "undefined" || color.length !== 6))
@@ -425,7 +445,9 @@ Single Line Field Name: Single Line Info Here
 		if(desc.length === 0)
 			desc = null;
 
-		let obj = new StructObj(message.guild.id, auto.struct, Object.keys(aliasLib), message.author.id, title, color, iconURL, imageURL, paramLib, fields, undefined, desc);
+		delete aliasLib[""];
+
+		let obj = new StructObj(message.guild.id, auto.struct, Object.keys(aliasLib), message.author.id, title, color, iconURL, imageURL, paramLib, fields, meta, desc);
 		let outputText = "+Successfully created " + obj.getStructType() + " \"" + obj.getTitle() + "\" with ID: " + obj.getID() + "\n\nRegistered commands:";
 		let aliases = obj.getAliases();
 

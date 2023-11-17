@@ -389,6 +389,26 @@ module.exports = (g) =>
 			if(!success)
 				return true;
 
+			if(!menu.color || !menu.iconURL)
+			{
+				let sdata = SERVER_DATA[menu.message.guild.id].structs;
+				if(sdata && name === sdata[menu.struct].getParent())
+				{
+					let parent = sdata[menu.struct].getParentObj(value);
+
+					if(parent)
+					{
+						if(!menu.color) menu.embed.setColor(parent.getColor() || "808080");
+						if(!menu.iconURL) menu.embed.setAuthor({name: menu.title, iconURL: parent.getIconURL()})
+					}
+					else
+					{
+						if(!menu.color) menu.embed.setColor("808080");
+						if(!menu.iconURL) menu.embed.setAuthor({name: menu.title});
+					}
+				}
+			}
+
 			menu.params[name] = value;
 			updateFields(menu);
 

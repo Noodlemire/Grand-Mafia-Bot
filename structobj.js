@@ -526,7 +526,7 @@ module.exports = (g) =>
 
 						for(let i = 0; i < fields.length; i++)
 						{
-							if(UTILS.toArgName(fields[i].name).search(UTILS.toArgName(k)) !== -1)
+							if(UTILS.toArgName(fields[i].name).includes(UTILS.toArgName(k)))
 							{
 								add = false;
 								break;

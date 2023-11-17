@@ -1,1 +1,1 @@
-{"aliases":["40"],"author":"329331408269213696","title":"Tango","params":{},"fields":[],"meta":{},"desc":"Choose two players to tango for the next turn. (They cannot move normally and must Tango, rolling a 1d6 together. They both move that number of spaces)","id":28}
+{"aliases":["40","tango"],"author":"329331408269213696","title":"Tango","params":{},"fields":[],"meta":{},"desc":"Post 40\nChoose two players to tango for the next turn. (They cannot move normally and must Tango, rolling a 1d6 together. They both move that number of spaces)","id":28}

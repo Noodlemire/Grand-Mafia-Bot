@@ -475,7 +475,7 @@ module.exports = (g) =>
 					filters[i] = UTILS.split(args[i], ":");
 
 					for(let n = 0; n < filters[i].length; n++)
-						filters[i][n] = UTILS.toArgName(filters[i][n]);
+						filters[i][n] = UTILS.toArgName(filters[i][n], true);
 				}
 
 				for(let id = 0; id < struct.getMaxID(); id++)
@@ -566,7 +566,7 @@ module.exports = (g) =>
 					filters[i] = UTILS.split(args[i], ":");
 
 					for(let n = 0; n < filters[i].length; n++)
-						filters[i][n] = UTILS.toArgName(filters[i][n]);
+						filters[i][n] = UTILS.toArgName(filters[i][n], true);
 				}
 
 				for(let id = 0; id < struct.getMaxID(); id++)

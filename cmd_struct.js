@@ -215,7 +215,7 @@ module.exports = (g) =>
 			return;
 		}
 
-		if(!source.member.permissions.has(ELEVATED) && (!SERVER_DATA[source.guild.id].user_submission || obj.getAuthor() !== source.user.id))
+		if(!source.member.permissions.has(ELEVATED) && (!SERVER_DATA[source.guild.id].user_submission || obj.getAuthor() !== source.member.id))
 		{
 			UTILS.msg(source, "-You do not have permission to edit this object.");
 			return;
@@ -276,7 +276,7 @@ module.exports = (g) =>
 			return;
 		}
 
-		if(!source.member.permissions.has(ELEVATED) && (!SERVER_DATA[source.guild.id].user_submission || obj.getAuthor() !== source.user.id))
+		if(!source.member.permissions.has(ELEVATED) && (!SERVER_DATA[source.guild.id].user_submission || obj.getAuthor() !== source.member.id))
 		{
 			UTILS.msg(source, "-You do not have permission to edit this object.");
 			return;
@@ -665,6 +665,12 @@ module.exports = (g) =>
 			return;
 		}
 
+		if(menu.message.guild.id !== source.guild.id)
+		{
+			UTILS.msg(source, "-ERROR: You must use /restart in the same Server that you started your menu in!");
+			return;
+		}
+
 		source.editReply({embeds: [menu.embed], components: menu.message.components, ephemeral: true, allowedMentions: {repliedUser: false}, fetchReply: true}).then((sent) =>
 		{
 			menu.message = sent;
@@ -705,7 +711,7 @@ module.exports = (g) =>
 			return;
 		}
 
-		if(!source.member.permissions.has(ELEVATED) && (!SERVER_DATA[source.guild.id].user_submission || obj.getAuthor() !== source.user.id))
+		if(!source.member.permissions.has(ELEVATED) && (!SERVER_DATA[source.guild.id].user_submission || obj.getAuthor() !== source.member.id))
 		{
 			UTILS.msg(source, "-You do not have permission to edit this object.");
 			return;
