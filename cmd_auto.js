@@ -23,6 +23,12 @@ module.exports = (g) =>
 			meta,
 			func: (chn, source, e, args) =>
 			{
+				if(!source.guild)
+				{
+					UTILS.msg(source, "-ERROR: You cannot use this command outside of a Server.");
+					return;
+				}
+
 				let id = source.guild.id;
 
 				if(!SERVER_DATA[id])
@@ -101,7 +107,7 @@ Single Line Field Name: Single Line Info Here
 
 		if(data.inherit)
 		{
-			UTILS.msg(source, "-ERROR: You cannot edit Structures or Objects while inheritance is enabled.");
+			UTILS.msg(source, "-You cannot edit Structures or Objects while inheritance is enabled.");
 			return;
 		}
 
@@ -149,7 +155,52 @@ Single Line Field Name: Single Line Info Here
 		overwrite();
 	});
 
-	return (struct, auto, message, output) =>
+	register_scmd(["stop_automattion", "stopautomattion", "stopauto"], "<#input>", "Stop Automation", "Disable an Automation Input Channel.", {adminOnly: true, minArgs: 1, slashOpts:
+		[
+			{datatype: "String", oname: "input", func: (str) => str.setDescription("Channel where input messages go to be processed.")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		let data = SERVER_DATA[source.guild.id];
+		let inp = args[0].substring(2, args[0].length-1);
+		let input = source.guild.channels.cache.get(inp);
+
+		if(!data.auto || !data.auto[inp])
+		{
+			UTILS.msg(source, "-ERROR: Could not find Automation Channel with ID: " + inp);
+			return;
+		}
+
+		delete data.auto[inp];
+
+		if(input)
+			UTILS.msg(input, "-Automation Stopped.");
+
+		UTILS.msg(source, "+Successfully stopped Automation Channel with ID: " + inp);
+
+		overwrite();
+	});
+
+	register_scmd(["list_automattions", "listautomattions", "listauto"], "", "List Automations", "List all Automation Input Channel IDs.", (chn, source, e, args) =>
+	{
+		let data = SERVER_DATA[source.guild.id];
+
+		if(!data.auto || Object.keys(data.auto).length === 0)
+		{
+			UTILS.msg(source, "-There are no Automations to list.");
+			return;
+		}
+
+		let output = "Automations:";
+
+		for(let id in data.auto)
+			output += "\n<#" + id + "> (" + data.auto[id].struct + ")";
+
+		UTILS.msg(source, output, true);
+	});
+
+	return (struct, auto, message, output, locked) =>
 	{
 		if(!message.member.permissions.has(ELEVATED) && !SERVER_DATA[message.guild.id].user_submission)
 		{
@@ -254,7 +305,7 @@ Single Line Field Name: Single Line Info Here
 						}
 					}
 				}
-				else if(auto.epn && postNo === "")
+				else if(auto.epn && postNo === "" && /\d/.test(line))
 				{
 					let words = UTILS.split(line, " ");
 
@@ -275,10 +326,10 @@ Single Line Field Name: Single Line Info Here
 							aliasLib[String(parseInt(postNo, 10))] = true;
 					}
 				}
-				else if((paramKeys[line.toLowerCase()] !== undefined || line.includes(":")) && (!field || n === 0))
+				else if((paramKeys[line.toLowerCase()] !== undefined || line.includes(":") || line.substring(0, 2) === "**") && (!field || n === 0))
 				{
 					let info = UTILS.split(line, ":");
-					let key = info[0].trim().substring(0, 256);
+					let key = info[0].trim().substring(0, 256).replace(/[\*_~\`]/g, "");
 					let akey = UTILS.toArgName(key);
 					let value = info[1];
 
@@ -286,7 +337,10 @@ Single Line Field Name: Single Line Info Here
 						value += ":" + info[t];
 
 					if(value)
-						value = value.trim();
+						value = UTILS.trimFormatting(value);
+
+					if(value === "")
+						value = undefined;
 
 					if(paramKeys[akey] !== undefined)
 					{
@@ -448,7 +502,7 @@ Single Line Field Name: Single Line Info Here
 		delete aliasLib[""];
 
 		let obj = new StructObj(message.guild.id, auto.struct, Object.keys(aliasLib), message.author.id, title, color, iconURL, imageURL, paramLib, fields, meta, desc);
-		let outputText = "+Successfully created " + obj.getStructType() + " \"" + obj.getTitle() + "\" with ID: " + obj.getID() + "\n\nRegistered commands:";
+		let outputText = "+Successfully " + (locked ? "queued" : "created") + " " + obj.getStructType() + " \"" + obj.getTitle() + "\" with ID" + (postNo === "" ? "" : " (Not Necessarily Post Number)") + ": " + obj.getID() + "\n\nRegistered commands:";
 		let aliases = obj.getAliases();
 
 		for(let i = 0; i < aliases.length; i++)

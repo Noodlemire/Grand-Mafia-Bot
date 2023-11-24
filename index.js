@@ -304,7 +304,7 @@ fs.readFile(FNAME, (err1, data) =>
 
 			if(SERVER_DATA[id].players)
 				for(let i = 0; i < SERVER_DATA[id].players.length; i++)
-					SERVER_DATA[id].players[i] = new Player(id, SERVER_DATA[id].players[i]);
+					SERVER_DATA[id].players[i] = new Player(SERVER_DATA[id].players[i]);
 
 			if(SERVER_DATA[id].structs)
 				for(let s in SERVER_DATA[id].structs)
@@ -473,7 +473,7 @@ bot.on("messageCreate", (message) =>
 		let output = message.guild.channels.cache.get(data.auto[message.channel.id].output);
 
 		if(output)
-			autoFunc(data.structs[data.auto[message.channel.id].struct], data.auto[message.channel.id], message, output);
+			autoFunc(data.structs[data.auto[message.channel.id].struct], data.auto[message.channel.id], message, output, data.locked);
 		else
 			UTILS.msg(message, "-ERROR: Could not find Output Channel with ID: " + data.auto[message.channel.id].output);
 
@@ -535,7 +535,7 @@ bot.on("messageCreate", (message) =>
 
 						try
 						{
-							struct.execute(message, cmd, args);
+							struct.execute(message, cmd, args, false);
 						}
 						catch(err)
 						{
@@ -543,6 +543,8 @@ bot.on("messageCreate", (message) =>
 							console.trace();
 							UTILS.msg(message, "-ERROR: " + err);
 						}
+
+						return;
 					}
 				}
 			}
@@ -556,10 +558,10 @@ bot.on("interactionCreate", async (i) =>
 	{
 		if(i.commandName)
 		{
-			let gcmds = guild_commands[i.guild.id];
+			let gcmds = guild_commands[(i.guild || {}).id];
 
-			if(SERVER_DATA[i.guild.id] && SERVER_DATA[i.guild.id].inherit)
-				gcmds = guild_commands[SERVER_DATA[i.guild.id].inherit];
+			if(SERVER_DATA[(i.guild || {}).id] && SERVER_DATA[(i.guild || {}).id].inherit)
+				gcmds = guild_commands[SERVER_DATA[(i.guild || {}).id].inherit];
 
 			let cmd = (gcmds || {})[i.commandName] || commands[i.commandName];
 

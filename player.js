@@ -94,7 +94,7 @@ module.exports = (g) =>
 			return this.getBool("alive", true);
 		}
 
-		has(tagName)
+		has(tagname)
 		{
 			return this.tags[tagname.toLowerCase()] !== undefined;
 		}

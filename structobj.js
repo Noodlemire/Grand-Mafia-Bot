@@ -77,6 +77,7 @@ module.exports = (g) =>
 		#id;
 		#seed;
 		#bits = [];
+		#locked;
 
 		constructor(serverid, struct, aliases, author, title, color, iconURL, imageURL, params, fields, meta, desc)
 		{
@@ -103,8 +104,8 @@ module.exports = (g) =>
 				this.#fields = json.fields;
 				this.#meta = json.meta;
 				this.#desc = json.desc
-
 				this.#id = json.id;
+				this.#locked = json.locked;
 
 				this.#seed = author;
 			}
@@ -128,6 +129,9 @@ module.exports = (g) =>
 				this.#meta = meta || this.#meta;
 				this.#desc = desc;
 
+				if(SERVER_DATA[serverid].locked)
+					this.#locked = true;
+
 				this.save();
 
 				if(this.#id === sdata.getMaxID())
@@ -141,7 +145,7 @@ module.exports = (g) =>
 				if(UTILS.isInt(min) && UTILS.isInt(max))
 				{
 					min = parseInt(min, 10);
-					max = parseInt(max, 10)
+					max = parseInt(max, 10);
 
 					this.#seed = this.#seed || UTILS.randInt(min, max);
 					decToBits(this.#bits, this.#seed - Math.min(min, max), Math.max(min, max) - Math.min(min, max));
@@ -174,6 +178,7 @@ module.exports = (g) =>
 			let title = this.#title;
 			let rand_title = this.getMeta("rand_title");
 			let cycle_title = this.getMeta("cycle_title");
+			let rand_fields = this.getMeta("rand_fields");
 
 			if(raw || this.#seed === undefined)
 				return title;
@@ -192,6 +197,9 @@ module.exports = (g) =>
 					return title;
 
 				if(max === undefined) max = min;
+
+				min = parseInt(min, 10);
+				max = parseInt(max, 10);
 
 				if(max < min)
 				{
@@ -217,6 +225,9 @@ module.exports = (g) =>
 
 					if(max === undefined) max = min;
 
+					min = parseInt(min, 10);
+					max = parseInt(max, 10);
+
 					if(max < min)
 					{
 						let m = min;
@@ -233,6 +244,44 @@ module.exports = (g) =>
 					newTitle += (bitRanges[i] ? cycle(title[i], bitsToDec(this.#bits, ...bitRanges[i])) : title[i]);
 
 				title = newTitle;
+			}
+
+			if(rand_fields)
+			{
+				let changes = UTILS.split(rand_fields, ";");
+				let data = {};
+
+				for(let i = 0; i < changes.length; i++)
+				{
+					let [key, bitStr, optStr] = UTILS.split(changes[i], ":");
+
+					if(!key || data[key] || !bitStr || !optStr)
+						return fields;
+
+					let [min, max] = UTILS.split(bitStr, "-");
+					let options = UTILS.split(optStr, "/");
+
+					if(!UTILS.isInt(min) || !UTILS.isInt(max, true))
+						return title;
+
+					if(max === undefined) max = min;
+
+					min = parseInt(min, 10);
+					max = parseInt(max, 10);
+
+					if(max < min)
+					{
+						let m = min;
+						min = max;
+						max = m;
+					}
+
+					let choice = bitsToDec(this.#bits, min, max);
+					data[key] = options[choice] || "!!!NO TEXT FOUND!!! (" + choice + ")";
+				}
+
+				for(let key in data)
+					title = title.replace(new RegExp(key, "g"), data[key]);
 			}
 
 			return title;
@@ -326,7 +375,7 @@ module.exports = (g) =>
 			if(!pdata)
 				return;
 
-			let obj = pdata.getFirstObj(this.getParentName());
+			let obj = pdata.getFirstObj(this.getParentName(), this.#locked);
 			this.#parentobj = obj;
 			return obj;
 		}
@@ -375,7 +424,13 @@ module.exports = (g) =>
 			let fields = [...this.#fields];
 			let rand_fields = this.getMeta("rand_fields");
 
-			if(raw || this.#seed === undefined)
+			if(raw)
+				return fields;
+
+			for(let i = 0; i < fields.length; i++)
+				fields[i].name = fields[i].name.replace(/\*/g, "");
+
+			if(this.#seed === undefined)
 				return fields;
 
 			if(rand_fields)
@@ -394,6 +449,9 @@ module.exports = (g) =>
 					let options = UTILS.split(optStr, "/");
 
 					if(max === undefined) max = min;
+
+					min = parseInt(min, 10);
+					max = parseInt(max, 10);
 
 					if(max < min)
 					{
@@ -543,6 +601,9 @@ module.exports = (g) =>
 			else
 				e.addFields(this.getFields());
 
+			if(this.#locked)
+				e.setFooter({text: "This " + this.#struct + " is not yet a part of the game."});
+
 			UTILS.embed(source, e);
 		}
 
@@ -561,7 +622,8 @@ module.exports = (g) =>
 				fields: this.#fields,
 				meta: this.#meta,
 				desc: this.#desc,
-				id: this.#id
+				id: this.#id,
+				locked: this.#locked
 			};
 
 			return json;
@@ -569,8 +631,16 @@ module.exports = (g) =>
 
 		save()
 		{
-			let file = path.join(CUSTOMDIR, this.#serverid, this.#struct, this.#id + ".json");
+			this.#locked = SERVER_DATA[this.#serverid].locked;
+			let fname = this.#id + (this.#locked ? " (locked)" : "") + ".json";
+
+			let file = path.join(CUSTOMDIR, this.#serverid, this.#struct, fname);
 			fs.writeFileSync(file, JSON.stringify(this));
+		}
+
+		isLocked()
+		{
+			return this.#locked === true;
 		}
 	}
 

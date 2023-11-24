@@ -25,6 +25,12 @@ module.exports = (g) =>
 			meta,
 			func: (chn, source, e, args) =>
 			{
+				if(!source.guild)
+				{
+					UTILS.msg(source, "-ERROR: You cannot use this command outside of a Server.");
+					return;
+				}
+
 				let id = source.guild.id;
 
 				if(!SERVER_DATA[id])
@@ -190,13 +196,15 @@ module.exports = (g) =>
 	},
 	(chn, source, e, args) =>
 	{
-		if(SERVER_DATA[source.guild.id].inherit)
+		let data = SERVER_DATA[source.guild.id];
+
+		if(data.inherit)
 		{
 			UTILS.msg(source, "-You cannot edit Structures or Objects while inheritance is enabled.");
 			return;
 		}
 
-		let sdata = SERVER_DATA[source.guild.id].structs || {};
+		let sdata = data.structs || {};
 		let sname = UTILS.toArgName(args[0], true);
 
 		if(!sdata[sname])
@@ -207,11 +215,17 @@ module.exports = (g) =>
 
 		let arg = args[1];
 		if(args[2]) arg += " " + args[2];
-		let obj = sdata[sname].search(arg);
+		let obj = sdata[sname].search(arg, data.locked);
 
 		if(!obj)
 		{
 			UTILS.msg(source, "-There is no Object that could be identified using '" + arg + "'. It might have a differnt alias/ID, or there may be other objects with the same ID.");
+			return;
+		}
+
+		if(data.locked && !obj.isLocked())
+		{
+			UTILS.msg(source, "-You may not delete this object until the Edit Lock is disabled. Only queued objects may be deleted.");
 			return;
 		}
 
@@ -226,16 +240,34 @@ module.exports = (g) =>
 		for(let i = 0; i < aliases.length; i++)
 			sdata[sname].delAliasForID(obj.getID(), aliases[i]);
 
-		let file = path.join(CUSTOMDIR, source.guild.id, sname, obj.getID() + ".json");
+		if(data.locked)
+		{
+			let file = path.join(CUSTOMDIR, source.guild.id, sname, obj.getID() + ".json");
+
+			if(fs.existsSync(file))
+			{
+				let oldObj = JSON.parse(fs.readFileSync(file, "utf8"));
+
+				if(oldObj)
+				{
+					let oldAliases = oldObj.aliases;
+
+					for(let i = 0; i < oldAliases.length; i++)
+						sdata[sname].addAliasForID(oldObj.id, oldAliases[i]);
+				}
+			}
+		}
+
+		let file = path.join(CUSTOMDIR, source.guild.id, sname, obj.getID() + (data.locked ? " (locked)" : "") + ".json");
 
 		if(!fs.existsSync(file))
 		{
-			UTILS.msg(source, "-This is a known structure without a folder. This is probably a bug.");
+			UTILS.msg(source, "-This is a known object without a file. This is probably a bug.");
 			return;
 		}
 
 		fs.rmSync(file, {recursive: true, force: true});
-		UTILS.msg(source, "+Successfully deleted " + sname + " '" + obj.getTitle(true) + "' with ID: " + obj.getID());
+		UTILS.msg(source, "+Successfully deleted " + (data.locked ? "queued " : "") + sname + " '" + obj.getTitle(true) + "' with ID: " + obj.getID());
 		overwrite();
 	});
 
@@ -252,13 +284,15 @@ module.exports = (g) =>
 	},
 	(chn, source, e, args) =>
 	{
-		if(SERVER_DATA[source.guild.id].inherit)
+		let data = SERVER_DATA[source.guild.id];
+
+		if(data.inherit)
 		{
 			UTILS.msg(source, "-You cannot edit Structures or Objects while inheritance is enabled.");
 			return;
 		}
 
-		let sdata = SERVER_DATA[source.guild.id].structs || {};
+		let sdata = data.structs || {};
 		let sname = UTILS.toArgName(args[0], true);
 
 		if(!sdata[sname])
@@ -268,7 +302,7 @@ module.exports = (g) =>
 		}
 
 		let arg = args[1];
-		let obj = sdata[sname].search(arg);
+		let obj = sdata[sname].search(arg, data.locked);
 
 		if(!obj)
 		{
@@ -583,10 +617,11 @@ module.exports = (g) =>
 		});
 	});
 
-	register_scmd(["object_meta", "objectmeta", "objmeta", "ometa", "om"], "[structure] [alias or ID]", "Check Object Meta", "Check an Object's Metadata, or list all possible Meta fields.", {slashOpts:
+	register_scmd(["object_meta", "objectmeta", "objmeta", "ometa", "om"], "[structure] [alias or ID] [Locked Version]", "Check Object Meta", "Check an Object's Metadata, or list all possible Meta fields.", {slashOpts:
 		[
 			{datatype: "String", oname: "structure", func: (str) => str.setDescription("When checking an Object's Meta, you must specify the Structure that it belongs to.")},
 			{datatype: "String", oname: "identifier", func: (str) => str.setDescription("Alias or ID. May also provide a space-separated specifier, i.e. `thing 4`")},
+			{datatype: "Boolean", oname: "locked_version", func: (str) => str.setDescription("In Edit Lock mode, check for an updated version if it exists. Default: False")},
 		]
 	},
 	(chn, source, e, args) =>
@@ -625,8 +660,9 @@ module.exports = (g) =>
 				}
 
 				let arg = args[1];
-				if(args[2]) arg += " " + args[2];
-				let obj = sdata[sname].search(arg);
+				if(UTILS.isInt(args[2])) arg += " " + args[2];
+				let lockVer = args[3] !== undefined ? UTILS.bool(args[3], false) : UTILS.bool(args[2], false);
+				let obj = sdata[sname].search(arg, lockVer);
 
 				if(!obj)
 				{
@@ -686,7 +722,9 @@ module.exports = (g) =>
 	},
 	(chn, source, e, args) =>
 	{
-		if(SERVER_DATA[source.guild.id].inherit)
+		let data = SERVER_DATA[source.guild.id];
+
+		if(data.inherit)
 		{
 			UTILS.msg(source, "-You cannot edit Structures or Objects while inheritance is enabled.");
 			return;
@@ -703,7 +741,7 @@ module.exports = (g) =>
 
 		let arg = args[1];
 		if(args[2] && UTILS.isInt(args[2])) arg += " " + args[2];
-		let obj = sdata[sname].search(arg);
+		let obj = sdata[sname].search(arg, data.locked);
 
 		if(!obj)
 		{
@@ -754,7 +792,7 @@ module.exports = (g) =>
 			return;
 		}
 
-		if(!args[0])
+		if(args[0] === undefined)
 			UTILS.msg(source, "User Submission Mode: " + (data.user_submission ? "Enabled" : "Disabled"));
 		else
 		{
@@ -766,10 +804,11 @@ module.exports = (g) =>
 		}
 	});
 
-	register_scmd(["view_json", "viewjson", "json", "vj"], "<structure> <alias or ID>", "View Object JSON", "Load and display all of an Object's raw JSON data.", {minArgs: 2, slashOpts:
+	register_scmd(["view_json", "viewjson", "json", "vj"], "<structure> <alias or ID> [Locked Version]", "View Object JSON", "Load and display all of an Object's raw JSON data.", {minArgs: 2, slashOpts:
 		[
 			{datatype: "String", oname: "structure", func: (str) => str.setDescription("When checking an Object's Meta, you must specify the Structure that it belongs to.")},
 			{datatype: "String", oname: "identifier", func: (str) => str.setDescription("Alias or ID. May also provide a space-separated specifier, i.e. `thing 4`")},
+			{datatype: "Boolean", oname: "locked_version", func: (str) => str.setDescription("In Edit Lock mode, check for an updated version if it exists. Default: False")},
 		]
 	},
 	(chn, source, e, args) =>
@@ -786,8 +825,9 @@ module.exports = (g) =>
 			}
 
 			let arg = args[1];
-			if(args[2]) arg += " " + args[2];
-			let json = sdata[sname].search(arg, true);
+			if(UTILS.isInt(args[2])) arg += " " + args[2];
+			let lockVer = args[3] !== undefined ? UTILS.bool(args[3], false) : UTILS.bool(args[2], false);
+			let json = sdata[sname].search(arg, lockVer, true);
 
 			if(!json)
 			{
@@ -796,6 +836,98 @@ module.exports = (g) =>
 			}
 
 			UTILS.msg(source, UTILS.display(json));
+		});
+	});
+
+	register_scmd("lock", "[Boolean]", "Edit Lock", "Enable/disable/check if editing has been Locked to prevent edits from applying to the current game.", {adminOnly: true, slashOpts:
+		[
+			{datatype: "Boolean", oname: "allowed", func: (str) => str.setDescription("Set to enable/disable the Edit Lock. Omit to check if it is enabled or disabled.")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		let data = SERVER_DATA[source.guild.id];
+
+		if(data.inherit)
+		{
+			UTILS.msg(source, "-You cannot edit Structures or Objects while inheritance is enabled.");
+			return;
+		}
+
+		if(args[0] === undefined)
+			UTILS.msg(source, "Edit Lock: " + (data.locked ? "Enabled" : "Disabled"));
+		else
+		{
+			let was = data.locked;
+			let lock = UTILS.bool(args[0], false);
+
+			data.locked = lock;
+
+			if(was && !data.locked && data.structs)
+				for(let s in data.structs)
+					data.structs[s].unlock();
+
+			UTILS.msg(source, "Edit Lock is now: " + (lock ? "Enabled" : "Disabled"));
+			overwrite();
+		}
+	});
+
+	register_scmd("preview", "<Command>", "Preview Locked Object", "Preview the Edit-Locked version of an Object", {minArgs: 1, slashOpts:
+		[
+			{datatype: "String", oname: "command", func: (str) => str.setDescription("The Object Command to preview in its soon-to-be-updated form, including prefix.")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		UTILS.inherit(SERVER_DATA, source, (data) =>
+		{
+			if(!data.locked)
+			{
+				UTILS.msg(source, "-Edit Lock mode is disabled. There are no pending updates to preview.");
+				return;
+			}
+
+			let sdata = data.structs;
+
+			if(!sdata)
+			{
+				UTILS.msg(source, "-There is no Structure data at all, much less anything to preview.");
+				return;
+			}
+
+			if(args.length === 1)
+				args = UTILS.split(args, " ");
+
+			for(let s in sdata)
+			{
+				let struct = sdata[s];
+
+				if(struct.getPrefix() === args[0].substring(0, struct.getPrefix().length))
+				{
+					let cmd = (args[0] || "").toLowerCase().substring(struct.getPrefix().length);
+					args = args.splice(1);
+
+					try
+					{
+						struct.execute(source, cmd, args, true);
+					}
+					catch(err)
+					{
+						console.log(err);
+						console.trace();
+						UTILS.msg(message, "-ERROR: " + err);
+					}
+
+					return;
+				}
+			}
+
+			let input = args[0];
+
+			for(let i = 1; i < args.length; i++)
+				input += " " + args[i];
+			
+			UTILS.msg(source, "-ERROR: No Structure could be matched to input:\n " + input);
 		});
 	});
 };

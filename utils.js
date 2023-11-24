@@ -363,13 +363,20 @@ module.exports = (g) =>
 	{
 		if(!s) return {};
 
-		let splits1 = s.split(d1);
+		let splits1 = UTILS.split(s, d1);
 		let lib = {};
 
 		for(let i = 0; i < splits1.length; i++)
 		{
 			let splits2 = splits1[i].split(d2);
-			lib[String(splits2[0]).trim()] = (splits2[1] ? splits2[1].trim() : null);
+			let k = String(splits2[0]).trim();
+
+			lib[k] = splits2[1] || null;
+
+			for(let n = 2; n < splits2.length; n++)
+				lib[k] += d2 + (splits2[n] || "");
+
+			lib[k] = lib[k].trim();
 		}
 
 		return lib;
@@ -632,6 +639,39 @@ module.exports = (g) =>
 		if(extended) output = output.replace(/[^\w_\-]/g, "");
 
 		return output;
+	}
+
+	UTILS.trimFormatting = (str) =>
+	{
+		let f = ["\*", "_", "`", "~"];
+		str = str.trim();
+
+		for(let i = 0; i < f.length; i++)
+		{
+		    let limit = 0;
+		    
+		    for(let n = str.length-1; n >= 0; n--)
+			{
+				if(str[n] === f[i])
+					limit++;
+				else
+					break;
+			}
+			
+			let limitMax = limit;
+
+			if(limit > 0)
+				for(let n = 0; n < str.length-limitMax; n++)
+					if(str[n] === f[i])
+						limit--;
+
+			if(limit > 0)
+				return UTILS.trimFormatting(str.substring(0, str.length-limit));
+			else if(limitMax > 0)
+				return UTILS.trimFormatting(str.substring(0, str.length-limitMax)) + f[i].repeat(limitMax);
+		}
+
+		return str;
 	}
 
 	UTILS.verifyDir = (...dirs) =>

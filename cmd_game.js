@@ -6,22 +6,22 @@ function commaCheck(UTILS, t, s)
 		return false;
 }
 
-function firstname(p)
-{
-	let name;
-
-	if(typeof p === "string")
-		name = p;
-	else
-		name = p.dispname || p.nicknames[0] || "unknown (bug)";
-
-	return name.substring(0, 1).toUpperCase() + name.substring(1);
-}
-
 module.exports = (g) =>
 {
 	const {PRE, CUSTOMDIR, UTILS, Player, add_scmd, overwrite, menus, ActionRowBuilder, SERVER_DATA, path, fs} = g;
 	let i = 0;
+
+	function firstname(p)
+	{
+		let name;
+
+		if(typeof p === "string")
+			name = p;
+		else
+			name = p.dispname || p.nicknames[0] || "unknown (bug)";
+
+		return UTILS.titleCase(name)
+	}
 	
 	function register_scmd(name, param, title, desc, meta, func)
 	{
@@ -40,6 +40,12 @@ module.exports = (g) =>
 			meta,
 			func: (chn, source, e, args) =>
 			{
+				if(!source.guild)
+				{
+					UTILS.msg(source, "-ERROR: You cannot use this command outside of a Server.");
+					return;
+				}
+
 				let id = source.guild.id;
 
 				if(!SERVER_DATA[id])
@@ -76,7 +82,7 @@ module.exports = (g) =>
 
 			for(let i = a+2; i < args.length; i++)
 			{
-				if(UTILS.getPlayerByName(pdata, args[i].toLowerCase().replace(/ /g, "_")))
+				if(UTILS.getPlayerByName(pdata, UTILS.toArgName(args[i])))
 				{
 					UTILS.msg(source, "-Cannot register player with duplicate nickname: \"" + args[i] + "\"");
 					return;
@@ -88,17 +94,17 @@ module.exports = (g) =>
 					return;
 				}
 
-				nicknames[i - 1 - a] = args[i].toLowerCase().replace(/ /g, "_");
+				nicknames[i - 2 - a] = UTILS.toArgName(args[i]);
 			}
 
 			if(nicknames.length === 0)
-				nicknames[0] = (user ? user.displayName : args[a]).toLowerCase().replace(/ /g, "_");
+				nicknames[0] = UTILS.toArgName(user ? user.displayName : args[a]);
 
 			for(let i = pdata.length; i >= num; i--)
 			{
 				if(i === num)
 				{
-					pdata[i] = new Player((user ? user.id : args[a]), i+1, nicknames, (user ? user.displayName : args[a]).replace(/ /g, "").replace(/_/g, ""), player_channel, defaults.tags);
+					pdata[i] = new Player((user ? user.id : args[a]), i+1, nicknames, nicknames[0] || (user ? user.displayName : args[a]), player_channel.id, defaults.tags);
 				}
 				else
 				{
@@ -127,7 +133,10 @@ module.exports = (g) =>
 			{datatype: "String", oname: "nickname2", func: (str) => str.setDescription("Second nickname")},
 			{datatype: "String", oname: "nickname3", func: (str) => str.setDescription("Third nickname")},
 			{datatype: "String", oname: "nickname4", func: (str) => str.setDescription("Fourth nickname")},
-			{datatype: "String", oname: "nickname5", func: (str) => str.setDescription("Fifth nickname")}
+			{datatype: "String", oname: "nickname5", func: (str) => str.setDescription("Fifth nickname")},
+			{datatype: "String", oname: "nickname6", func: (str) => str.setDescription("Sixth nickname")},
+			{datatype: "String", oname: "nickname7", func: (str) => str.setDescription("Seventh nickname")},
+			{datatype: "String", oname: "nickname8", func: (str) => str.setDescription("Eighth nickname")}
 		]
 	},
 	(chn, source, e, args) =>
@@ -224,7 +233,7 @@ module.exports = (g) =>
 					tags = tags + "\n\"" + tag + "\": \"" + plr.tags[tag] + "\"";
 			}
 
-			fields[fields.length] = {name: "Player " + (i+1), value: "Name: " + (plr.dispname || "") + " (<@" + (UTILS.isLong(plr.id) ? plr.id : "NPC") + ">)\n" + nicks + tags, inline: true};
+			fields[fields.length] = {name: "Player " + (i+1), value: "Name: " + UTILS.titleCase(plr.dispname || "") + " (<@" + (UTILS.isLong(plr.id) ? plr.id : "NPC") + ">)\nChannel: <#" + plr.channel + ">\n" + nicks + tags, inline: true};
 		}
 
 		e.addFields(fields);
@@ -357,7 +366,7 @@ module.exports = (g) =>
 
 		let recipient = UTILS.isInt(args[0])
 			&& pdata[parseInt(args[0])-1]
-			|| getPlayerByName(pdata, args[0]);
+			|| UTILS.getPlayerByName(pdata, args[0]);
 
 		let redirected = {};
 		if(recipient)

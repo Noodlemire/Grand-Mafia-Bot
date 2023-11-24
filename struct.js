@@ -131,8 +131,17 @@ module.exports = (g) =>
 				for(let id = 0; id < this.#nextID; id++)
 				{
 					let file = path.join(CUSTOMDIR, this.#serverid, this.#name, id + ".json");
+					let file_locked = path.join(CUSTOMDIR, this.#serverid, this.#name, id + " (locked).json");
 
-					if(fs.existsSync(file))
+					if(fs.existsSync(file_locked))
+					{
+						let data = JSON.parse(fs.readFileSync(file_locked, "utf8"));
+						let als = data.aliases;
+
+						for(let a = 0; a < als.length; a++)
+							this.addAliasForID(data.id, als[a]);
+					}
+					else if(fs.existsSync(file))
 					{
 						let data = JSON.parse(fs.readFileSync(file, "utf8"));
 						let als = data.aliases;
@@ -203,7 +212,7 @@ module.exports = (g) =>
 			return this.#parent;
 		}
 
-		getParentObj(p)
+		getParentObj(p, lockVer)
 		{
 			if(!this.#parent)
 				return;
@@ -213,7 +222,7 @@ module.exports = (g) =>
 			if(!pdata)
 				return;
 
-			return pdata.getFirstObj(UTILS.toArgName(p));
+			return pdata.getFirstObj(UTILS.toArgName(p), lockVer);
 		}
 
 		getParam(n)
@@ -269,8 +278,9 @@ module.exports = (g) =>
 			for(let id = 0; id < this.#nextID; id++)
 			{
 				let file = path.join(CUSTOMDIR, this.#serverid, this.#name, id + ".json");
+				let file_locked = path.join(CUSTOMDIR, this.#serverid, this.#name, id + " (locked).json");
 
-				if(!fs.existsSync(file))
+				if(!fs.existsSync(file) && !fs.existsSync(file_locked))
 					return id;
 			}
 
@@ -294,17 +304,21 @@ module.exports = (g) =>
 			for(let id = 0; id < this.#nextID; id++)
 			{
 				let file = path.join(CUSTOMDIR, this.#serverid, this.#name, id + ".json");
+				let file_locked = path.join(CUSTOMDIR, this.#serverid, this.#name, id + " (locked).json");
 
-				if(fs.existsSync(file))
+				if(!fs.existsSync(file) && !fs.existsSync(file_locked))
 					sum++;
 			}
 
 			return sum;
 		}
 
-		getObj(id, asJSON, seed)
+		getObj(id, lockVer, asJSON, seed)
 		{
-			let file = path.join(CUSTOMDIR, this.#serverid, this.#name, id + ".json");
+			let file = path.join(CUSTOMDIR, this.#serverid, this.#name, id + (lockVer ? " (locked)" : "") + ".json");
+
+			if(lockVer && !fs.existsSync(file))
+				file = path.join(CUSTOMDIR, this.#serverid, this.#name, id + ".json");
 
 			if(fs.existsSync(file))
 			{
@@ -317,21 +331,21 @@ module.exports = (g) =>
 			}
 		}
 
-		getFirstObj(alias)
+		getFirstObj(alias, lockVer)
 		{
 			if(!this.#aliasIDs[alias])
 				return;
 
-			return this.getObj(this.#aliasIDs[alias][0]);
+			return this.getObj(this.#aliasIDs[alias][0], lockVer);
 		}
 
-		search(arg, asJSON)
+		search(arg, lockVer, asJSON)
 		{
 			let [id, num] = UTILS.split(arg, " ");
 
 			if(UTILS.isInt(id))
 			{
-				let obj = this.getObj(id);
+				let obj = this.getObj(id, lockVer);
 				if(obj) return obj;
 			}
 
@@ -340,9 +354,14 @@ module.exports = (g) =>
 			let ids = this.getIDs(id);
 
 			if(ids[num-1])
-				return this.getObj(ids[num-1], asJSON);
+				return this.getObj(ids[num-1], lockVer, asJSON);
 			else if(ids.length === 1)
-				return this.getObj(ids[0], asJSON);
+				return this.getObj(ids[0], lockVer, asJSON);
+		}
+
+		hasLockedVer(id)
+		{
+			return fs.existsSync(path.join(CUSTOMDIR, this.#serverid, this.#name, id + " (locked).json"))
 		}
 
 		//Due to technical wizardry, 'this' refers to the Command object that stores this function.
@@ -480,7 +499,7 @@ module.exports = (g) =>
 
 				for(let id = 0; id < struct.getMaxID(); id++)
 				{
-					let info = struct.getObj(id);
+					let info = struct.getObj(id, false);
 
 					if(info)
 					{
@@ -571,7 +590,7 @@ module.exports = (g) =>
 
 				for(let id = 0; id < struct.getMaxID(); id++)
 				{
-					let info = struct.getObj(id);
+					let info = struct.getObj(id, false);
 
 					if(info)
 					{
@@ -634,7 +653,7 @@ module.exports = (g) =>
 			});
 		}
 
-		execute(source, cmd, args)
+		execute(source, cmd, args, lockVer)
 		{
 			let ids = this.#aliasIDs[cmd];
 			let id = null;
@@ -642,7 +661,7 @@ module.exports = (g) =>
 
 			if(!ids || ids.length === 0)
 			{
-				UTILS.msg(source, "-ERROR: Unknown command: " + this.getPre() + cmd);
+				UTILS.msg(source, "-ERROR: Unknown " + this.getName() + ": " + this.getPre() + cmd);
 				return;
 			}
 			else if(ids.length === 1)
@@ -657,13 +676,15 @@ module.exports = (g) =>
 				else
 				{
 					let txt = "Command '" + this.#prefix + cmd + "' refers to multiple commands. Did you mean:\n";
+					let validIDs = [];
 
 					for(let i = 0; i < ids.length; i++)
 					{
-						let obj = this.getObj(ids[i]);
+						let obj = this.getObj(ids[i], lockVer);
 
 						if(obj)
 						{
+							validIDs[validIDs.length] = ids[i];
 							txt += "\n" + this.#prefix + cmd + " " + (i+1) + " - " + obj.getTitle(true);
 
 							let paramKeys = this.getParams();
@@ -679,26 +700,36 @@ module.exports = (g) =>
 								txt += ")";
 							}
 						}
-						else
+						else if(!lockVer && !this.hasLockedVer(ids[i]))
 							txt += "\n-ERROR: Data for ID '" + ids[i] + "' is missing or corrupted!";
 					}
 
-					UTILS.msg(source, txt);
-					return;
+					if(validIDs.length === 0)
+						txt = "-ERROR: Unknown " + this.getName() + ": " + this.getPre() + cmd;
+
+					if(validIDs.length === 1)
+						id = validIDs[0];
+					else
+					{
+						UTILS.msg(source, txt);
+						return;
+					}
 				}
 			}
 
 			if(UTILS.isInt(id))
 			{
-				let obj = this.getObj(id, false, seed);
+				let obj = this.getObj(id, lockVer, false, seed);
 
 				if(obj)
 					obj.embed(source);
-				else
+				else if(!lockVer && !this.hasLockedVer(id))
 					UTILS.msg(source, "-ERROR: File `" + this.getName() + "/" + id + ".json` is missing or corrupted.");
+				else
+					UTILS.msg(source, "-ERROR: Unknown " + this.getName() + ": " + this.getPre() + cmd);
 			}
 			else
-				UTILS.msg(source, "-ERROR: Unknown command: " + this.getPre() + cmd);
+				UTILS.msg(source, "-ERROR: Unknown " + this.getName() + ": " + this.getPre() + cmd);
 		}
 
 		toJSON()
@@ -718,6 +749,20 @@ module.exports = (g) =>
 			};
 
 			return json;
+		}
+
+		unlock()
+		{
+			for(let id = 0; id < this.#nextID; id++)
+			{
+				let file_locked = path.join(CUSTOMDIR, this.#serverid, this.#name, id + " (locked).json");
+
+				if(fs.existsSync(file_locked))
+				{
+					new StructObj(this.#serverid, this.#name, fs.readFileSync(file_locked, "utf8")).save();
+					fs.rmSync(file_locked, {recursive: true, force: true});
+				}
+			}
 		}
 	}
 
