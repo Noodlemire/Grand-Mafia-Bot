@@ -40,7 +40,7 @@ module.exports = (g) =>
 			let tag = this.tags[tagName.toLowerCase()];
 			def = def || 0;
 
-			if(!tag) return def;
+			if(tag === undefined || !isNaN(tag)) return def;
 
 			return parseInt(tag, 10);
 		}
@@ -60,7 +60,7 @@ module.exports = (g) =>
 			let tag = this.tags[tagName.toLowerCase()];
 			def = def || 0;
 
-			if(!tag) return def;
+			if(tag === undefined || isNaN(tag)) return def;
 
 			return parseFloat(tag);
 		}

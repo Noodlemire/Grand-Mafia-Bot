@@ -113,7 +113,7 @@ module.exports = (g) =>
 				}
 			}
 
-			overwrite();
+			overwrite(source);
 			UTILS.msg(source, "+Player " + (num+1) + " registered successfully!");
 		};
 
@@ -188,7 +188,7 @@ module.exports = (g) =>
 		}
 
 		UTILS.msg(source, output);
-		overwrite();
+		overwrite(source);
 	});
 
 	register_scmd(["list_players", "listplayers", "players"], "", "List Players", "Display the current data of registered players, including tags if any exist.\n\n**Warning, this can reveal meta info if used in public channels.** But only if you're using the prefix command version. The slash command version sends a message which is visible only to the command user.", {adminOnly: true, ephemeral: true, shortDesc: "Display the current data of registered players, including tags if any exist."}, (chn, source, e, args) =>
@@ -197,8 +197,24 @@ module.exports = (g) =>
 		let fields = [];
 
 		if(pdata.length === 0)
+			throw "-There is no player data to display.";
+
+		if(!source.deferred && !source.reply && !source.send)
 		{
-			UTILS.msg(source, "-There is no player data to display.");
+			let output = "";
+
+			for(let i = 0; i < pdata.length; i++)
+			{
+				if(!pdata[i])
+				{
+					console.log("No player for number: " + i);
+					continue;
+				}
+
+				output += "\n{" + UTILS.titleCase(pdata[i].dispname) + "}";
+			}
+
+			UTILS.msg(source, output);
 			return;
 		}
 
@@ -261,7 +277,7 @@ module.exports = (g) =>
 		else
 			UTILS.msg(source, "-It is now Night.");
 
-		overwrite();
+		overwrite(source);
 	});
 
 	register_scmd(["is_day", "isday"], "", "Is Day", "Check if it's current Day or not in the bot. Whispers can't be sent at Night.", (chn, source, e, args) =>
@@ -293,7 +309,7 @@ module.exports = (g) =>
 		else
 			UTILS.msg(source, "-They die.");
 
-		overwrite();
+		overwrite(source);
 	});
 
 	register_scmd(["is_alive", "isalive", "alive"], "<Player Name or Number>", "Is Alive", "Check if a player is considered alive or not by the bot.", (chn, source, e, args) =>
@@ -419,7 +435,7 @@ module.exports = (g) =>
 			UTILS.msg(rchannel, "Whisper from " + firstname(sender) + ": " + whisper, true);
 
 		UTILS.msg(source, SENT);
-		sender.setInt("whispers", sender.setInt("whispers")+1);
+		sender.setInt("whispers", sender.getInt("whispers")+1);
 
 		if(!sender.getBool("no_overhear", false) && (sender.has("announce") || sender.has("relay")))
 		{
@@ -527,14 +543,19 @@ module.exports = (g) =>
 				output += "+Player " + player.num + ": Tag \"" + key + "\" set to \"" + value + "\".";
 			}
 			else
-				output += "Player " + player.num + ": Tag \"" + key + "\" is currently set to \"" + (player.tags[key] || "") + "\".";
+			{
+				if(source.deferred || source.reply || source.send)
+					output += "Player " + player.num + ": Tag \"" + key + "\" is currently set to \"" + (player.tags[key] || "") + "\".";
+				else
+					output += (player.tags[key] || "");
+			}
 
 			if(i < players.length-1)
 				output += '\n';
 		}
 
 		UTILS.msg(source, output);
-		overwrite();
+		overwrite(source);
 	});
 
 	register_scmd(["tag_default", "tagdefault", "default"], "<Key> [Value]", "Tag Default", "Set a default tag value. This will be applied to future added players, but not to ones that already exist.\n\nTo check what a Tag's default currently is, use this command without providing a Value.\n\nTo check all Default Tags, use the =tag_defaults command.\n\nTo remove a Tag, use this command with the Value set to \"-\" (without the quotes).\n\nTo list usable tags, use the =tags command.",
@@ -573,7 +594,7 @@ module.exports = (g) =>
 		else
 			UTILS.msg(source, "+Tag Default \"" + key + "\" is currently set to \"" + (defaults[args[1]] || "null") + "\".");
 
-		overwrite();
+		overwrite(source);
 	});
 
 	register_scmd(["tag_defaults", "tagdefaults", "defaults"], "", "Tag Defaults", "List all default tags which are applied to newly registered players.", {adminOnly: true, ephemeral: true}, (chn, source, e, args) =>
@@ -648,7 +669,7 @@ module.exports = (g) =>
 		}
 
 		UTILS.msg(source, txt);
-		overwrite();
+		overwrite(source);
 	});
 
 	register_scmd(["list_relays", "listrelays", "list_relay", "listrelay", "relays"], "", "List Relays", "List all active relays. Be careful, using this in public might modconfirm a secret chat.", {adminOnly: true, ephemeral: true}, (chn, source, e, args) =>
@@ -709,6 +730,6 @@ module.exports = (g) =>
 			rdata[i] = newrelay[i];
 
 		UTILS.msg(source, "Deleted:" + output);
-		overwrite();
+		overwrite(source);
 	});
 };

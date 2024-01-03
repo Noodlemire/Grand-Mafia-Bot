@@ -1,10 +1,36 @@
 const CONTENT_LIMIT = 1950
 let msg = "";
+let diff = false;
 
 module.exports = (g) =>
 {
 	const {bot, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, menus, interactions, fs, path} = g;
 	const UTILS = {};
+
+	UTILS.arrayByBraces = (a) =>
+	{
+		let cur = undefined;
+		let deep = 0;
+
+		for(let i = a.length-1; i >= 0; i--)
+		{
+			let numCl = UTILS.countChar(a[i], "}");
+			let numOp = UTILS.countChar(a[i], "{");
+
+			if(numCl > numOp || deep > 0)
+				cur = a[i] + (cur ? ' ' + cur : '');
+
+			deep = Math.max(deep + (numCl - numOp), 0);
+
+			if(deep === 0 && cur)
+			{
+				a[i] = cur;
+				cur = undefined;
+			}
+			else if(deep > 0)
+				a.splice(i, 1);
+		}
+	}
 
 	UTILS.arrayToChecklist = (a) =>
 	{
@@ -23,9 +49,9 @@ module.exports = (g) =>
 
 		let s = str ? str.toLowerCase() : "";
 
-		if(s === "true" || s === "t" || s === "yes" || s == "y")
+		if(UTILS.isOneOf(s, "true", "t", "yes", "y"))
 			return true;
-		else if(s === "false" || s === "f" || s === "no" || s === "n")
+		else if(UTILS.isOneOf(s, "false", "f", "no", "n"))
 			return false;
 		else
 			return def;
@@ -37,7 +63,6 @@ module.exports = (g) =>
 		return new cls(JSON.parse(JSON.stringify(obj)), ...args);
 	}
 
-	//<table>, <string>
 	UTILS.containsString = (t, s) =>
 	{
 		if(!t || !s)
@@ -56,6 +81,17 @@ module.exports = (g) =>
 
 		for(let i = 0; i < objs.length; i++)
 			if(objs[i])
+				c++;
+
+		return c;
+	}
+
+	UTILS.countChar = (str, ch) =>
+	{
+		let c = 0;
+
+		for(let i = 0; i < str.length; i++)
+			if(str[i] === ch)
 				c++;
 
 		return c;
@@ -126,6 +162,12 @@ module.exports = (g) =>
 		let pages = [{fields: [], sum: 0}];
 		let curPage = 0;
 		let sumPage = 0;
+
+		if(!s.deferred && !s.reply && !s.send)
+		{
+			s.returned = auth !== "" ? auth : e.description;
+			return;
+		}
 
 		if(auth.length > 256) {UTILS.msg(s, "-ERROR: Embed Title \"" + auth + "\" is longer than 256 characters!"); return;}
 
@@ -202,7 +244,7 @@ module.exports = (g) =>
 		let sfunc = s.deferred ? "editReply" : "reply";
 		if(!s[sfunc]) sfunc = "send";
 
-		s[sfunc](eObj).catch(console.error).then(cb);
+		return s[sfunc](eObj).catch(console.error).then(cb);
 	}
 
 	UTILS.fillArr = (...vals) =>
@@ -214,6 +256,38 @@ module.exports = (g) =>
 				arr[arr.length] = vals[i];
 
 		return arr;
+	}
+
+	UTILS.findFirstChar = (str, ch) =>
+	{
+		for(let i = 0; i < str.length; i++)
+			if(str[i] === ch)
+				return i;
+	}
+
+	UTILS.findLastCharAfter = (str, ch, start) =>
+	{
+		for(let i = start-1; i >= 0; i--)
+			if(str[i] === ch)
+				return i;
+	}
+
+	UTILS.findClosingCharFor = (str, ch, target, start) =>
+	{
+		let nested = 0;
+
+		for(let i = start+1; i < str.length; i++)
+		{
+			if(str[i] === ch)
+				nested++;
+			else if(str[i] === target)
+			{
+				if(nested > 0)
+					nested--;
+				else
+					return i;
+			}
+		}
 	}
 
 	UTILS.firstEmpty = (arr) =>
@@ -240,6 +314,24 @@ module.exports = (g) =>
 			return max;
 		else
 			return value;
+	}
+
+	UTILS.getActiveBody = (bodyinfo) =>
+	{
+		if(!bodyinfo) return;
+
+		for(let i = 0; i < bodyinfo.length; i++)
+		{
+			if(typeof bodyinfo[i] === "object" && !bodyinfo[i].ended)
+			{
+				let nested = UTILS.getActiveBody(bodyinfo[i].commands);
+
+				if(nested)
+					return nested;
+				else
+					return bodyinfo[i];
+			}
+		}
 	}
 
 	UTILS.getPlayerByID = (players, id) =>
@@ -338,6 +430,11 @@ module.exports = (g) =>
 		return url.protocol === "http:" || url.protocol === "https:";
 	}
 
+	UTILS.isVar = (str) =>
+	{
+		return str && str.indexOf("{") !== -1 && str.indexOf("{") < str.indexOf("}");
+	}
+
 	UTILS.inherit = (data, source, callback) =>
 	{
 		if(data[source.guild.id].inherit)
@@ -347,7 +444,7 @@ module.exports = (g) =>
 				if(guild && guild.id)
 				{
 					if(data[guild.id])
-						callback(data[guild.id]);
+						return callback(data[guild.id]);
 					else
 						UTILS.msg(source, "-Error: Currently inheriting from a server with no available data.");
 				}
@@ -356,7 +453,7 @@ module.exports = (g) =>
 			});
 		}
 		else
-			callback(data[source.guild.id]);
+			return callback(data[source.guild.id]);
 	}
 
 	UTILS.libSplit = (s, d1, d2) =>
@@ -433,9 +530,16 @@ module.exports = (g) =>
 
 	UTILS.msg = (src, txt, nodiff, line, menu) =>
 	{
+		txt = (txt || "").toString();
+
+		if(!src.deferred && !src.reply && !src.send)
+		{
+			src.returned = txt;
+			return {then: (cb) => {if(cb) return cb();}};
+		}
+
 		let size = CONTENT_LIMIT;
 		line = (line || 0);
-		txt = (txt || "").toString();
 
 		if(line + size < txt.length)
 			while(txt[line+size-1] && txt[line+size-1] != '\n')
@@ -469,11 +573,11 @@ module.exports = (g) =>
 				let msgObj = {content: message, allowedMentions: {repliedUser: false}, fetchReply: true};
 
 				if(src.deferred)
-					src.editReply(msgObj).catch(console.error);
+					return src.editReply(msgObj).catch(console.error);
 				else if(src.reply)
-					src.reply(msgObj).catch(console.error);
+					return src.reply(msgObj).catch(console.error);
 				else
-					src.send(msgObj).catch(console.error);
+					return src.send(msgObj).catch(console.error);
 			}
 		}
 		else
@@ -496,16 +600,36 @@ module.exports = (g) =>
 		}
 	}
 
-	UTILS.print = (str) =>
+	UTILS.print = (source, str, nextDiff) =>
 	{
+		let curDiff = source.print ? source.print.diff : diff;
+
+		if(nextDiff && !curDiff) str = "```diff\n" + str;
+		if(!nextDiff && curDiff) str = "\n```" + str;
+
 		if(str)
-			msg += String(str) + "\n";
+		{
+			if(source.print)
+			{
+				source.print.txt += String(str) + "\n";
+				source.print.diff = nextDiff;
+			}
+			else
+			{
+				msg += String(str) + "\n";
+				diff = nextDiff;
+			}
+		}
 	}
 
 	UTILS.printReturn = () =>
 	{
 		let m = msg;
+		if(diff) m += "\n'''"
+
 		msg = "";
+		diff = false;
+
 		return m;
 	}
 
@@ -676,7 +800,7 @@ module.exports = (g) =>
 
 	UTILS.verifyDir = (...dirs) =>
 	{
-		for(let a = 1; a < dirs.length; a++)
+		for(let a = 0; a < dirs.length; a++)
 		{
 			let d = [];
 

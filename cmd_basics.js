@@ -299,8 +299,56 @@ module.exports = (g) =>
 		UTILS.msg(source, "+Pong!");
 	});
 
+	register_scmd("echo", "<Message>", "Echo", "Debug; Bot will echo your message back at you.", {minArgs: 1, slashOpts: [{datatype: "String", oname: "message", func: (str) => str.setDescription("The text that the bot will repeat.")}]}, (chn, source, e, args) =>
+	{
+		let txt = args[0];
+
+		for(let i = 1; i < args.length; i++)
+			txt += ' ' + args[i];
+
+		UTILS.print(source, txt, true);
+		UTILS.msg(source, txt, false);
+	});
+
+	register_scmd("say", "<Message>", "Say", "Debug; Bot will repeat your message back to you, without code block formatting.", {minArgs: 1, slashOpts: [{datatype: "String", oname: "message", func: (str) => str.setDescription("The text that the bot will repeat.")}]}, (chn, source, e, args) =>
+	{
+		let txt = args[0];
+
+		for(let i = 1; i < args.length; i++)
+			txt += ' ' + args[i];
+
+		UTILS.print(source, txt, false);
+		UTILS.msg(source, txt, true);
+	});
+
+	register_scmd(["throw_error", "throwerror", "throw", "error"], "<Message>", "Throw Error", "Debug; Stop execution of current command/script with an error message.", {minArgs: 1, slashOpts: [{datatype: "String", oname: "message", func: (str) => str.setDescription("The text that the bot will repeat.")}]}, (chn, source, e, args) =>
+	{
+		let txt = args[0];
+
+		for(let i = 1; i < args.length; i++)
+			txt += ' ' + args[i];
+
+		throw txt;
+	});
+
 	register_scmd("overwrite", "", "Overwrite", "Manually write current data to internal storage.", {adminOnly: true}, (chn, source) =>
 	{
-		overwrite(source);
+		overwrite(undefined, (success, error) =>
+		{
+			if(success)
+				UTILS.msg(source, "+Data saved successfully.");
+			else
+				UTILS.msg(source, "-Error: " + (error || "Multiple simultaneous overwrites!"));
+		});
+	});
+
+	register_cmd("count", "<list...>", "Count", "Count out the amount of lines within this message.", {minArgs: 1}, (chn, source, e, args) =>
+	{
+		let all = "";
+
+		for(let i = 0; i < args.length; i++)
+			all += args[i];
+
+		UTILS.msg(source, UTILS.split(all, '\n').length);
 	});
 };

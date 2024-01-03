@@ -94,7 +94,7 @@ module.exports = (g) =>
 				title: title + " List",
 				desc: "Create a filterable list of Objects belonging to the '" + title + "' Structure.",
 				meta: {slashOpts: [{datatype: "String", oname: "author_id", func: (str) => str.setDescription("Filter by User ID. You may choose multiple; use `:` to separate them.").setMaxLength(2000)}]},
-				func: this.#list,
+				func: this.list,
 				struct: name.name || name,
 				
 			};
@@ -103,7 +103,15 @@ module.exports = (g) =>
 				title: "Random " + title,
 				desc: "Randomly generate a new " + title + ", adhering to any given filters.",
 				meta: {slashOpts: [{datatype: "String", oname: "author_id", func: (str) => str.setDescription("Filter by User ID. You may choose multiple; use `:` to separate them.").setMaxLength(2000)}]},
-				func: this.#roll,
+				func: (chn, source, e, args) => 
+				{
+					let result = this.roll(chn, source, e, args);
+
+					if(result)
+						result.info.embed(source);
+					else
+						UTILS.msg(source, "Nothing could be generated under given filters.");
+				},
 				struct: name.name || name
 			};
 
@@ -306,7 +314,7 @@ module.exports = (g) =>
 				let file = path.join(CUSTOMDIR, this.#serverid, this.#name, id + ".json");
 				let file_locked = path.join(CUSTOMDIR, this.#serverid, this.#name, id + " (locked).json");
 
-				if(!fs.existsSync(file) && !fs.existsSync(file_locked))
+				if(fs.existsSync(file) || fs.existsSync(file_locked))
 					sum++;
 			}
 
@@ -345,7 +353,7 @@ module.exports = (g) =>
 
 			if(UTILS.isInt(id))
 			{
-				let obj = this.getObj(id, lockVer);
+				let obj = this.getObj(id, lockVer, asJSON);
 				if(obj) return obj;
 			}
 
@@ -480,7 +488,7 @@ module.exports = (g) =>
 		}
 
 		//Due to technical wizardry, 'this' refers to the Command object that stores this function.
-		#list(chn, source, e, args)
+		list(chn, source, e, args)
 		{
 			UTILS.inherit(SERVER_DATA, source, (data) =>
 			{
@@ -500,6 +508,7 @@ module.exports = (g) =>
 				for(let id = 0; id < struct.getMaxID(); id++)
 				{
 					let info = struct.getObj(id, false);
+					let infoLocked = struct.getObj(id, true);
 
 					if(info)
 					{
@@ -555,7 +564,7 @@ module.exports = (g) =>
 
 						if(allowed)
 						{
-							let aliases = info.getAliases();
+							let aliases = infoLocked.getAliases();
 							let line = "";
 
 							for(let a = 0; a < aliases.length; a++)
@@ -571,14 +580,16 @@ module.exports = (g) =>
 			});
 		}
 
-		//Due to technical wizardry, 'this' refers to the Command object that stores this function.
-		#roll(chn, source, e, args)
+		//Due to technical wizardry, 'this' may refer to the Command object that stores this function.
+		roll(chn, source, e, args)
 		{
-			UTILS.inherit(SERVER_DATA, source, (data) =>
+			return UTILS.inherit(SERVER_DATA, source, (data) =>
 			{
-				let struct = data.structs[this.struct];
+				let struct = this;
 				let filters = [];
 				let rollable = {};
+
+				if(struct.struct) struct = data.structs[struct.struct];
 
 				for(let i = 0; i < args.length; i++)
 				{
@@ -638,18 +649,11 @@ module.exports = (g) =>
 						}
 
 						if(allowed)
-						{
 							rollable[info.getID()] = {info, rate};
-						}
 					}
 				}
 
-				let result = UTILS.randChances(rollable);
-
-				if(result)
-					result.info.embed(source);
-				else
-					UTILS.msg(source, "Nothing could be generated under given filters.");
+				return UTILS.randChances(rollable);
 			});
 		}
 

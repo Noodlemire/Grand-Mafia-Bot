@@ -516,7 +516,7 @@ module.exports = (g) =>
 
 		getBool(key, def)
 		{
-			return UTILS.bool(key, def);
+			return UTILS.bool(this.#meta[key], def);
 		}
 
 		getDesc(raw)

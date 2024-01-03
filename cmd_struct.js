@@ -5,10 +5,10 @@ const COOL_IT = "Please cool it with all of these new server commands. I don't w
 
 module.exports = (g) =>
 {
-	const {bot, PRE, CUSTOMDIR, ELEVATED, SERVER_DATA, UTILS, add_scmd, overwrite, guild_commands, guild_commands_json, refreshCommands, Struct, path, fs, registerMenus, ActionRowBuilder, ButtonBuilder, ButtonStyle} = g;
+	const {bot, PRE, CUSTOMDIR, ELEVATED, SERVER_DATA, UTILS, add_cmd, add_scmd, overwrite, guild_commands, guild_commands_json, refreshCommands, Struct, path, fs, registerMenus, ActionRowBuilder, ButtonBuilder, ButtonStyle} = g;
 	let i = 0;
 	
-	function register_scmd(name, param, title, desc, meta, func)
+	function register_(cmdfunc, name, param, title, desc, meta, func)
 	{
 		if(!func)
 		{
@@ -16,7 +16,7 @@ module.exports = (g) =>
 			meta = {};
 		}
 
-		add_scmd(name, {
+		cmdfunc(name, {
 			id: "s" + i,
 			cat: "Structure",
 			title,
@@ -41,6 +41,16 @@ module.exports = (g) =>
 		});
 
 		i = i + 1;
+	}
+
+	function register_cmd(name, param, title, desc, meta, func)
+	{
+		return register_(add_cmd, name, param, title, desc, meta, func);
+	}
+
+	function register_scmd(name, param, title, desc, meta, func)
+	{
+		return register_(add_scmd, name, param, title, desc, meta, func);
 	}
 
 	register_scmd(["create_structure", "createstructure", "structure", "struct", "cs"], "<name> <prefix> [parent OR -] [param1] [param2] [param3] [param4]", "Create Structure", "Create a new Structure; A template for which objects can be created.\n\nUpon creation, this will create a new registration command specific to your server and Struct name.\n\nIn the `name`, `parent`, and all `param` parameters, only lowercase alphanumeric characters, as well as - and _, are allowed. In addition, the structure name can only be " + (ARG_MAX - REG.length) + " characters long, while the parent and params can only be " + ARG_MAX + " characters long.\n\nThe prefix is used to use commands for all objects created under this Structure. Say the prefix is `%` and you create an object with the `test` command alias; the `%test` command will bring up that object's infocard. For sanity's sake, the prefix cannot have uppercase letters or spaces, and it can only be up to " + PRE_MAX + " characters long. Also, the Prefix can't be the bot's main Prefix (`" + PRE + "`), and it cannot match the Prefix of any other pre-existing Struct on this server.\n\nEach Param is a mini-field to be listed prior to an Object's main info fields. Params should typically be things like stats, categories, or other smaller details that wouldn't need a paragraph or sentence to describe them. Any Params you name here becomes required parameters for anyone using this Struct's Registration command.\n\nThe Parent works similarly to other Params, but includes special functionality. The Struct's Parent must be the name of another existing Structure on this server. Thus, any object you create can define a specific object from its Parent Structure Type, to be considered its own Parent. An Object will inherit its specific Parent's Color and IconURL, unless the Object defines its own specific Color and/or IconURL.\n\nIf you do not want your Structure to have a Parent, but you want it to have regular Params, set its Parent to `-` (Not necessary if you're using the Slash version of this command)", {adminOnly: true, minArgs: 2, shortDesc: "Create a new Structure; A template for which objects can be created.", slashOpts:
@@ -113,7 +123,7 @@ module.exports = (g) =>
 
 			UTILS.msg(source, "+Successfully registered: " + args[0] + "\n\nNew commands have been created for you to use:\n/" + REG + args[0] + "\n/" + args[0] + "_list" + "\n/roll_" + args[0]);
 			refreshCommands();
-			overwrite();
+			overwrite(source);
 		}
 		catch(err)
 		{
@@ -185,7 +195,7 @@ module.exports = (g) =>
 
 		UTILS.msg(source, "+Successfully deleted: " + sname + "\n\nRelated commands have been disabled and will be deleted shortly. Please wait a minute.");
 		refreshCommands();
-		overwrite();
+		overwrite(source);
 	});
 
 	register_scmd(["delete"], "<structure> <alias or id>", "Delete Object", "Delete a specified object permanently.\n\nIf you use an alias to specify the object, you may also provide a numeric specifier, in the event that its alias is not unique. For example: `tedd 1` vs `tedd 2`", {minArgs: 2, shortDesc: "Delete a specified object permanently.", slashOpts:
@@ -219,7 +229,7 @@ module.exports = (g) =>
 
 		if(!obj)
 		{
-			UTILS.msg(source, "-There is no Object that could be identified using '" + arg + "'. It might have a differnt alias/ID, or there may be other objects with the same ID.");
+			UTILS.msg(source, "-There is no " + args[0] + " that could be identified using '" + arg + "'. It might have a different alias/ID, or there may be other objects with the same alias.");
 			return;
 		}
 
@@ -268,7 +278,7 @@ module.exports = (g) =>
 
 		fs.rmSync(file, {recursive: true, force: true});
 		UTILS.msg(source, "+Successfully deleted " + (data.locked ? "queued " : "") + sname + " '" + obj.getTitle(true) + "' with ID: " + obj.getID());
-		overwrite();
+		overwrite(source);
 	});
 
 	register_scmd("edit", "<structure> <alias or id> [new aliases] [new title] [new color] [new icon URL] [new image URL]", "Edit Object", "Make an edit to an existing object.", {slashOnly: true, ephemeral: true, minArgs: 2, slashOpts:
@@ -306,7 +316,7 @@ module.exports = (g) =>
 
 		if(!obj)
 		{
-			UTILS.msg(source, "-There is no Object that could be identified using '" + arg + "'. It might have a differnt alias/ID, or there may be other objects with the same ID.");
+			UTILS.msg(source, "-There is no " + args[0] + " that could be identified using '" + arg + "'. It might have a different alias/ID, or there may be other objects with the same alias.");
 			return;
 		}
 
@@ -560,7 +570,7 @@ module.exports = (g) =>
 			UTILS.msg(source, "Inheritance has been disabled, and editing is now re-enabled.\n\nPleas wait a minute for server commands to update.");
 			refreshCommands();
 			data.gcmd_limit = (data.gcmd_limit || 0) + (guild_commands_json[source.guild.id] || []).length;
-			overwrite();
+			overwrite(source);
 			return;
 		}
 
@@ -576,7 +586,7 @@ module.exports = (g) =>
 			UTILS.msg(source, "+You are now inheriting from '" + guild.name + "' (ID: " + guild.id + ")\n\nPleas wait a minute for server commands to update.");
 			refreshCommands();
 			data.gcmd_limit = (data.gcmd_limit || 0) + (guild_commands_json[sID] || []).length;
-			overwrite();
+			overwrite(source);
 		});
 	});
 
@@ -666,7 +676,7 @@ module.exports = (g) =>
 
 				if(!obj)
 				{
-					UTILS.msg(source, "-There is no Object that could be identified using '" + arg + "'. It might have a differnt alias/ID, or there may be other objects with the same ID.");
+					UTILS.msg(source, "-There is no " + args[0] + " that could be identified using '" + arg + "'. It might have a different alias/ID, or there may be other objects with the same alias.");
 					return;
 				}
 
@@ -745,7 +755,7 @@ module.exports = (g) =>
 
 		if(!obj)
 		{
-			UTILS.msg(source, "-There is no Object that could be identified using '" + arg + "'. It might have a differnt alias/ID, or there may be other objects with the same ID.");
+			UTILS.msg(source, "-There is no " + args[0] + " that could be identified using '" + arg + "'. It might have a different alias/ID, or there may be other objects with the same alias.");
 			return;
 		}
 
@@ -800,7 +810,7 @@ module.exports = (g) =>
 
 			data.user_submission = usub;
 			UTILS.msg(source, "User Submission Mode is now: " + (usub ? "Enabled" : "Disabled"));
-			overwrite();
+			overwrite(source);
 		}
 	});
 
@@ -819,10 +829,7 @@ module.exports = (g) =>
 			let sname = UTILS.toArgName(args[0], true);
 
 			if(!sdata[sname])
-			{
-				UTILS.msg(source, "-There is no Structure with the name: " + sname);
-				return;
-			}
+				throw "-There is no Structure with the name: " + sname;
 
 			let arg = args[1];
 			if(UTILS.isInt(args[2])) arg += " " + args[2];
@@ -830,10 +837,7 @@ module.exports = (g) =>
 			let json = sdata[sname].search(arg, lockVer, true);
 
 			if(!json)
-			{
-				UTILS.msg(source, "-There is no Object that could be identified using '" + arg + "'. It might have a differnt alias/ID, or there may be other objects with the same ID.");
-				return;
-			}
+				throw source, "-There is no " + args[0] + " that could be identified using '" + arg + "'. It might have a different alias/ID, or there may be other objects with the same alias.";
 
 			UTILS.msg(source, UTILS.display(json));
 		});
@@ -849,10 +853,7 @@ module.exports = (g) =>
 		let data = SERVER_DATA[source.guild.id];
 
 		if(data.inherit)
-		{
-			UTILS.msg(source, "-You cannot edit Structures or Objects while inheritance is enabled.");
-			return;
-		}
+			throw "-You cannot edit Structures or Objects while inheritance is enabled.";
 
 		if(args[0] === undefined)
 			UTILS.msg(source, "Edit Lock: " + (data.locked ? "Enabled" : "Disabled"));
@@ -868,7 +869,7 @@ module.exports = (g) =>
 					data.structs[s].unlock();
 
 			UTILS.msg(source, "Edit Lock is now: " + (lock ? "Enabled" : "Disabled"));
-			overwrite();
+			overwrite(source);
 		}
 	});
 
@@ -882,18 +883,12 @@ module.exports = (g) =>
 		UTILS.inherit(SERVER_DATA, source, (data) =>
 		{
 			if(!data.locked)
-			{
-				UTILS.msg(source, "-Edit Lock mode is disabled. There are no pending updates to preview.");
-				return;
-			}
+				throw "-Edit Lock mode is disabled. There are no pending updates to preview.";
 
 			let sdata = data.structs;
 
 			if(!sdata)
-			{
-				UTILS.msg(source, "-There is no Structure data at all, much less anything to preview.");
-				return;
-			}
+				throw "-There is no Structure data at all, much less anything to preview.";
 
 			if(args.length === 1)
 				args = UTILS.split(args, " ");
@@ -928,6 +923,73 @@ module.exports = (g) =>
 				input += " " + args[i];
 			
 			UTILS.msg(source, "-ERROR: No Structure could be matched to input:\n " + input);
+		});
+	});
+
+	register_cmd(["random_id", "randomid", "rid"], "<structure> [param1] [param2] [param3] [param4] [param5] [author id]", "Random ID", "For scripting purposes.\n\nGet a random object ID, filterable by Param.\n\nThis is essentially a script-compatible version of the `/rand_` series of server commands, following all the same filtering rules.\n\nOutputs only the numeric ID of the random object, or -1 if nothing was found.", {minArgs: 1}, (chn, source, e, args) =>
+	{
+		UTILS.inherit(SERVER_DATA, source, (data) =>
+		{
+			let sdata = data.structs || {};
+			let sname = UTILS.toArgName(args[0], true);
+
+			if(!sdata[sname])
+				throw "-There is no Structure with the name: " + sname;
+
+			args.splice(0, 1);
+
+			let result = sdata[sname].roll(chn, source, e, args);
+
+			if(result)
+				UTILS.msg(source, result.info.getID());
+			else
+				throw "-No results for query: " + UTILS.display(args);
+		});
+	});
+
+	register_cmd("data", "<structure> <alias or ID> <key1> [key2] [key3] [keyN]...", "Read Object Data", "For scripting purposes.\n\nRead a specific piece of data from a given object.\n\nIf multiple keys are provided, it is assumed that you are reading from a table within a table within a table... for each added key.\n\nThrows an error if the result, itself, would be a table.\n\nFor example, to find the name of the first field of an Example-Structure object named 'Thing', you might use:\n\n" + PRE + "data example thing fields 0 name\n\nUse the " + PRE + "view_json command to know what keys are available for an object.", {minArgs: 3}, (chn, source, e, args) =>
+	{
+		UTILS.inherit(SERVER_DATA, source, (data) =>
+		{
+			let sdata = data.structs || {};
+			let sname = UTILS.toArgName(args[0], true);
+
+			if(!sdata[sname])
+				throw "-There is no Structure with the name: " + sname;
+
+			let arg = args[1];
+			if(UTILS.isInt(args[2])) arg += " " + args[2];
+			let json = sdata[sname].search(arg, false, true);
+
+			if(!json)
+				throw "-There is no " + args[0] + " that could be identified using '" + arg + "'. It might have a different alias/ID, or there may be other objects with the same alias.";
+
+			let start = 2;
+
+			if(UTILS.isInt(args[2]))
+			{
+				if(args.length === 3)
+					throw "-You must provide at least one Key to search for!";
+
+				start = 3;
+			}
+
+			let cur = json;
+
+			for(let i = start; i < args.length; i++)
+			{
+				let key = args[i];
+
+				if(!cur[key])
+					throw "-Key not found: " + key;
+
+				cur = cur[key];
+			}
+
+			if(UTILS.isOneOf(typeof cur, "boolean", "number", "string"))
+				UTILS.msg(source, cur);
+			else
+				throw "Cannot output value of type: " + typeof cur;
 		});
 	});
 };

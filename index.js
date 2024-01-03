@@ -3,6 +3,7 @@ const {REST} = require("@discordjs/rest");
 const {Routes} = require("discord-api-types/v9");
 const fs = require("fs");
 const path = require("path");
+const fetch = require("node-fetch");
 
 const PRE = "!";
 const ELEVATED = PermissionsBitField.Flags.ManageGuild;
@@ -21,30 +22,36 @@ const guild_commands_json = [];
 const scdata = [];
 const conflicts = {};
 const menus = {};
+const locals = {};
+const bodyinfo = {};
 
 const UTILS = require("./utils.js")({bot, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, menus, interactions, fs, path});
 
 const SERVER_DATA = {};
 const LOCAL_DATA = {};
 
-var overwrites = 0;
+var overwriting = false;
 function overwrite(src, cb)
 {
-	if(overwrites > 1)
+	if(src && !src.deferred && !src.reply && !src.send)
+		return;
+
+	if(overwriting)
 	{
-		if(src) UTILS.msg(src, "-WARNING: " + overwrites + " simultaneous overwrites!");
-		console.log("WARNING: " + overwrites + " simultaneous overwrites!");
+		if(cb) cb(false);
+		console.log("-WARNING: Attempt to begin overwriting while already overwriting!");
+		return;
 	}
 
+	overwriting = true;
 	let json = JSON.stringify({LOCAL_DATA, SERVER_DATA});
-	overwrites++;
 
 	fs.writeFile(FNAME, json, (err) =>
 	{
+		if(cb) cb(!err, err);
 		if(err) throw err;
-		if(src) UTILS.msg(src, "+Data saved successfully.").then(() => {if(cb) return cb();});
 
-		overwrites--;
+		overwriting = false;
 	});
 }
 
@@ -272,6 +279,114 @@ function getMentions(text)
 	return mentions;
 }
 
+function process(source, limit)
+{
+	let channel = source.channel;
+	let embed = new EmbedBuilder();
+	let txt = source.content;
+	let auth = source.member;
+	let args = UTILS.split(source.content.substring(PRE.length), " ");
+	let cmd = (args[0] || "").toLowerCase();
+	args = args.splice(1);
+	limit = limit || 0;
+
+	if(limit > 1000) throw "-ERROR: Overflow";
+
+	let body = UTILS.getActiveBody(bodyinfo[auth.id]);
+	if(body && commands[cmd] && !commands[cmd].meta.runInBodyMode)
+	{
+		body.commands[body.commands.length] = txt;
+		UTILS.msg(source, "+Added: " + txt);
+		return;
+	}
+
+	UTILS.arrayByBraces(args);
+
+	if(commands[cmd])
+	{
+		let meta = commands[cmd].meta;
+
+		if(meta.slashOnly)
+			UTILS.msg(source, "-This command is only usable in Slash Command form.");
+		else if(meta.adminOnly && !source.member.permissions.has(ELEVATED))
+			UTILS.msg(source, "-You do not have elevated permissions for this bot.");
+		else
+		{
+			if(!meta.rawArgs)
+				for(let i = 0; i < args.length; i++)
+					args[i] = subprocess(source, args[i], limit);
+
+			for(let i = args.length; i >= 0; i--)
+				if(args[i] === "")
+					args.splice(i, 1);
+
+			if(meta.minArgs && args.length < meta.minArgs)
+			{
+				UTILS.msg(source, "-USAGE: " + PRE + cmd + " " + commands[cmd].param);
+				return;
+			}
+
+			commands[cmd].func(channel, source, embed, args);
+
+			if(source.returned)
+				return source.returned;
+		}
+	}
+	else
+		UTILS.msg(source, "-ERROR: Unknown command: " + PRE + cmd);
+}
+
+function subprocess(source, arg, limit)
+{
+	let auth = source.member;
+	let loc = source.locals || locals[auth.id];
+	let sdata = SERVER_DATA[source.guild.id];
+	limit = limit || 0;
+
+	if(typeof arg === "string")
+	{
+		let op = UTILS.findFirstChar(arg, "{");
+		let cl = UTILS.findClosingCharFor(arg, "{", "}", op);
+
+		while(typeof arg === "string" && cl !== undefined && op !== undefined && cl > op)
+		{
+			let subcmd = subprocess(source, arg.substring(op+1, cl).trim(), limit+1);
+
+			if(subcmd.substring(0, PRE.length) === PRE)
+			{
+				//let subargs = UTILS.split(subcmd, ' ');
+				//UTILS.arrayByBraces(subargs);
+
+				//for(let i = 0; i < subargs.length; i++)
+				//	if(i > 0 || 
+
+				arg = arg.substring(0, op) + String(process({
+					content: subcmd,
+					member: auth,
+					guild: source.guild,
+					channel: source.channel,
+					locals: source.locals,
+					print: source.print
+				}, limit+1) || "").trim() + arg.substring(cl+1);
+			}
+			else if(loc && loc[subcmd] !== undefined)
+				arg = arg.substring(0, op) + loc[subcmd] + arg.substring(cl+1);
+			else if(sdata && sdata.globals && sdata.globals[subcmd] !== undefined && source.member.permissions.has(ELEVATED))
+				arg = arg.substring(0, op) + sdata.globals[subcmd] + arg.substring(cl+1);
+			else
+				arg = arg.substring(0, op) + subcmd + arg.substring(cl+1);
+
+			cl = UTILS.findFirstChar(arg, "}");
+			op = UTILS.findLastCharAfter(arg, "{", cl);
+			limit++;
+
+			if(limit > 1000) throw "-ERROR: Overflow";
+		}
+	}
+
+	return arg;
+}
+
 const Player = require("./player.js")({UTILS});
 const StructObj = require("./structobj.js")({UTILS, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder});
 const registerMenus = require("./struct_menu.js")({UTILS, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder, StructObj, add_gcmd, overwrite, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle});
@@ -341,8 +456,12 @@ const GLOBAL = {
 	add_gcmd,
 	refreshCommands,
 	overwrite,
+	process,
+	subprocess,
 	menus,
 	registerMenus,
+	locals,
+	bodyinfo,
 
 	SERVER_DATA,
 
@@ -355,13 +474,15 @@ const GLOBAL = {
 	TextInputBuilder,
 	TextInputStyle,
 	path,
-	fs
+	fs,
+	fetch
 };
 
 const autoFunc = require("./cmd_auto.js")(GLOBAL);
 require("./cmd_basics.js")(GLOBAL);
 require("./cmd_game.js")(GLOBAL);
 require("./cmd_rng.js")(GLOBAL);
+require("./cmd_script.js")(GLOBAL);
 require("./cmd_struct.js")(GLOBAL);
 
 
@@ -482,38 +603,16 @@ bot.on("messageCreate", (message) =>
 
 	if(message.content.substring(0, PRE.length) === PRE)
 	{
-		let channel = message.channel;
-		let embed = new EmbedBuilder();
-		let args = UTILS.split(message.content.substring(PRE.length), " ");
-		let cmd = (args[0] || "").toLowerCase();
-		args = args.splice(1);
-
-		if(commands[cmd])
+		try
 		{
-			let meta = commands[cmd].meta;
-
-			if(meta.slashOnly)
-				UTILS.msg(message, "-This command is only usable in Slash Command form.");
-			else if(meta.adminOnly && !message.member.permissions.has(ELEVATED))
-				UTILS.msg(message, "-You do not have elevated permissions for this bot.");
-			else if(meta.minArgs && args.length < meta.minArgs)
-				UTILS.msg(message, "-USAGE: " + PRE + cmd + " " + commands[cmd].param);
-			else
-			{
-				try
-				{
-					commands[cmd].func(channel, message, embed, args);
-				}
-				catch(err)
-				{
-					console.log(err);
-					console.trace();
-					UTILS.msg(message, "-ERROR: " + err);
-				}
-			}
+			process(message);
 		}
-		else
-			UTILS.msg(message, "-ERROR: Unknown command: " + PRE + cmd);
+		catch(err)
+		{
+			console.log(err);
+			console.trace();
+			UTILS.msg(message, "-ERROR: " + err);
+		}
 	}
 	else if(SERVER_DATA[message.guild.id])
 	{
@@ -567,10 +666,12 @@ bot.on("interactionCreate", async (i) =>
 
 			if(cmd)
 			{
-				await i.deferReply({ephemeral: cmd.meta.ephemeral});
+				let meta = cmd.meta;
+
+				if(!meta.noDefer)
+					await i.deferReply({ephemeral: cmd.meta.ephemeral});
 
 				let embed = new EmbedBuilder();
-				let meta = cmd.meta;
 				let args = [];
 
 				if(meta.slashOpts)

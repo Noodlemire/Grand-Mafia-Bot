@@ -152,7 +152,7 @@ Single Line Field Name: Single Line Info Here
 
 		UTILS.msg(source, "Now Automating every " + sname + " post in " + args[1], true);
 		UTILS.msg(output, "Now logging Automated Commands from " + args[1], true);
-		overwrite();
+		overwrite(source);
 	});
 
 	register_scmd(["stop_automattion", "stopautomattion", "stopauto"], "<#input>", "Stop Automation", "Disable an Automation Input Channel.", {adminOnly: true, minArgs: 1, slashOpts:
@@ -179,7 +179,7 @@ Single Line Field Name: Single Line Info Here
 
 		UTILS.msg(source, "+Successfully stopped Automation Channel with ID: " + inp);
 
-		overwrite();
+		overwrite(source);
 	});
 
 	register_scmd(["list_automattions", "listautomattions", "listauto"], "", "List Automations", "List all Automation Input Channel IDs.", (chn, source, e, args) =>
@@ -349,7 +349,7 @@ Single Line Field Name: Single Line Info Here
 						else
 							params[paramKeys[akey]] = "True";
 					}
-					else if(UTILS.isOneOf(akey, "color_hex", "colorhex", "color"))
+					else if(UTILS.isOneOf(akey, "color_hex", "colorhex", "color", "hex"))
 					{
 						color = (value || "undefined").toLowerCase();
 
@@ -435,7 +435,12 @@ Single Line Field Name: Single Line Info Here
 						}
 					}
 					else
+					{
+						if(n === 0 && desc.length > 0)
+							desc += "\n";
+
 						desc += line + "\n";
+					}
 				}
 			}
 		}
