@@ -24,6 +24,7 @@ const conflicts = {};
 const menus = {};
 const locals = {};
 const bodyinfo = {};
+const ignorePostNo = {};
 
 const UTILS = require("./utils.js")({bot, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, menus, interactions, fs, path});
 
@@ -38,8 +39,9 @@ function overwrite(src, cb)
 
 	if(overwriting)
 	{
-		if(cb) cb(false);
-		console.log("-WARNING: Attempt to begin overwriting while already overwriting!");
+		let txt = "Attempt to begin overwriting while already overwriting!";
+		if(cb) cb(false, txt);
+		console.log("-WARNING: " + txt);
 		return;
 	}
 
@@ -279,7 +281,7 @@ function getMentions(text)
 	return mentions;
 }
 
-function process(source, limit)
+function process(source, limit, runInBodyMode)
 {
 	let channel = source.channel;
 	let embed = new EmbedBuilder();
@@ -293,7 +295,7 @@ function process(source, limit)
 	if(limit > 1000) throw "-ERROR: Overflow";
 
 	let body = UTILS.getActiveBody(bodyinfo[auth.id]);
-	if(body && commands[cmd] && !commands[cmd].meta.runInBodyMode)
+	if(body && commands[cmd] && !commands[cmd].meta.runInBodyMode && !runInBodyMode)
 	{
 		body.commands[body.commands.length] = txt;
 		UTILS.msg(source, "+Added: " + txt);
@@ -314,7 +316,7 @@ function process(source, limit)
 		{
 			if(!meta.rawArgs)
 				for(let i = 0; i < args.length; i++)
-					args[i] = subprocess(source, args[i], limit);
+					args[i] = subprocess(source, args[i], limit, runInBodyMode);
 
 			for(let i = args.length; i >= 0; i--)
 				if(args[i] === "")
@@ -336,7 +338,7 @@ function process(source, limit)
 		UTILS.msg(source, "-ERROR: Unknown command: " + PRE + cmd);
 }
 
-function subprocess(source, arg, limit)
+function subprocess(source, arg, limit, runInBodyMode)
 {
 	let auth = source.member;
 	let loc = source.locals || locals[auth.id];
@@ -350,7 +352,7 @@ function subprocess(source, arg, limit)
 
 		while(typeof arg === "string" && cl !== undefined && op !== undefined && cl > op)
 		{
-			let subcmd = subprocess(source, arg.substring(op+1, cl).trim(), limit+1);
+			let subcmd = subprocess(source, arg.substring(op+1, cl).trim(), limit+1, runInBodyMode);
 
 			if(subcmd.substring(0, PRE.length) === PRE)
 			{
@@ -367,7 +369,7 @@ function subprocess(source, arg, limit)
 					channel: source.channel,
 					locals: source.locals,
 					print: source.print
-				}, limit+1) || "").trim() + arg.substring(cl+1);
+				}, limit+1, runInBodyMode) || "").trim() + arg.substring(cl+1);
 			}
 			else if(loc && loc[subcmd] !== undefined)
 				arg = arg.substring(0, op) + loc[subcmd] + arg.substring(cl+1);
@@ -390,7 +392,7 @@ function subprocess(source, arg, limit)
 const Player = require("./player.js")({UTILS});
 const StructObj = require("./structobj.js")({UTILS, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder});
 const registerMenus = require("./struct_menu.js")({UTILS, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder, StructObj, add_gcmd, overwrite, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle});
-const Struct = require("./struct.js")({PRE, UTILS, ELEVATED, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder, StructObj, add_gcmd, ActionRowBuilder, ButtonBuilder, ButtonStyle, registerMenus});
+const Struct = require("./struct.js")({PRE, UTILS, ELEVATED, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder, StructObj, add_gcmd, ActionRowBuilder, ButtonBuilder, ButtonStyle, registerMenus, ignorePostNo});
 
 if(!fs.existsSync(CUSTOMDIR))
 	fs.mkdirSync(CUSTOMDIR);
@@ -424,6 +426,8 @@ fs.readFile(FNAME, (err1, data) =>
 			if(SERVER_DATA[id].structs)
 				for(let s in SERVER_DATA[id].structs)
 					SERVER_DATA[id].structs[s] = new Struct(id, SERVER_DATA[id].structs[s]);
+
+			fs.writeFileSync("numbers.json", JSON.stringify(ignorePostNo));
 		}
 	}
 
@@ -475,7 +479,9 @@ const GLOBAL = {
 	TextInputStyle,
 	path,
 	fs,
-	fetch
+	fetch,
+
+	ignorePostNo
 };
 
 const autoFunc = require("./cmd_auto.js")(GLOBAL);

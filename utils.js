@@ -247,6 +247,12 @@ module.exports = (g) =>
 		return s[sfunc](eObj).catch(console.error).then(cb);
 	}
 
+	UTILS.error = (source, e) =>
+	{
+		console.error(e);
+		UTILS.msg(source, e);
+	}
+
 	UTILS.fillArr = (...vals) =>
 	{
 		let arr = [];
@@ -468,7 +474,7 @@ module.exports = (g) =>
 			let splits2 = splits1[i].split(d2);
 			let k = String(splits2[0]).trim();
 
-			lib[k] = splits2[1] || null;
+			lib[k] = splits2[1] || "";
 
 			for(let n = 2; n < splits2.length; n++)
 				lib[k] += d2 + (splits2[n] || "");
@@ -757,12 +763,24 @@ module.exports = (g) =>
 
 	UTILS.toArgName = (str, extended) =>
 	{
-		let output = String(str).trim().toLowerCase().replace(/ /g, "_");
+		if(str instanceof Array)
+		{
+			let argArr = [];
 
-		//Replaces anything NOT alphanumeric, underscore, or dash with nothingness
-		if(extended) output = output.replace(/[^\w_\-]/g, "");
+			for(let i = 0; i < str.length; i++)
+				argArr[i] = UTILS.toArgName(str[i]);
 
-		return output;
+			return argArr;
+		}
+		else
+		{
+			let output = String(str).trim().toLowerCase().replace(/ /g, "_");
+
+			//Replaces anything NOT alphanumeric, underscore, or dash with nothingness
+			if(extended) output = output.replace(/[^\w_\-]/g, "");
+
+			return output;
+		}
 	}
 
 	UTILS.trimFormatting = (str) =>

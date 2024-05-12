@@ -1,6 +1,6 @@
 module.exports = (g) =>
 {
-	const {PRE, UTILS, ELEVATED, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder, StructObj, add_gcmd, ActionRowBuilder, ButtonBuilder, ButtonStyle, registerMenus} = g;
+	const {PRE, UTILS, ELEVATED, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder, StructObj, add_gcmd, ActionRowBuilder, ButtonBuilder, ButtonStyle, registerMenus, ignorePostNo} = g;
 
 	function listDisp(t, s, c)
 	{
@@ -156,6 +156,136 @@ module.exports = (g) =>
 
 						for(let a = 0; a < als.length; a++)
 							this.addAliasForID(data.id, als[a]);
+
+						if(serverid === "877320177035923466" && name.name !== "faction")
+						{
+							let postNo = "";
+							let desc = UTILS.split(data.desc, '\n');
+							let words = UTILS.split(desc[0], " ");
+
+							for(let t = 0; t < words.length; t++)
+							{
+								if(!isNaN(parseInt(words[t], 10)))
+								{
+									postNo = words[t];
+									break;
+								}
+							}
+
+							if(postNo !== "")
+								ignorePostNo[postNo] = true;
+
+							let TARGET = " - ";
+
+							/*if(data.title.includes(TARGET))
+							{
+								let amalgam = UTILS.split(data.title, TARGET);
+								let fixTitle = amalgam[0];
+								let alignment = amalgam[1].substring(0, amalgam[1].length-1);
+								let fixPost = data.aliases[0];
+								let fixUnique = "False";
+
+								if(fixPost === "4") fixPost = data.aliases[1];
+
+								if(alignment.substring(0, 6) === "Unique")
+								{
+									fixUnique = "True";
+									alignment = alignment.substring(7);
+								}
+
+								let facsub = UTILS.split(alignment, " (");
+								let fixFac = facsub[0];
+								let fixSub = facsub[1];
+
+								let fixAlisLib = {[fixPost]: true};
+
+								const COMMON = ["a", "an", "the", "to", "of", "but", "or", "and", "with", "without", "can", "cannot", "can't", "no", "do", "does", "don't", "doesn't", "us", "our", "you", "i", "me", "this", "that", "there", "then", "in", "out", "not", "if", "it", "it's", "its"];
+								let alias_base = UTILS.toArgName(fixTitle);
+								let alias_ext = UTILS.toArgName(fixTitle, true);
+								let hasSpace = alias_base.includes("_") || alias_base.includes("-");
+
+								fixAlisLib[alias_base] = true;
+								fixAlisLib[alias_ext] = true;
+
+								if(alias_base.includes("_") || alias_base.includes("-"))
+								{
+									fixAlisLib[alias_base.replace(/[_-]/g, "")] = true;
+									fixAlisLib[alias_ext.replace(/[_-]/g, "")] = true;
+								
+									let acronym = "";
+									let acronym_short = "";
+									let words_ext = UTILS.split(alias_ext, /[_-]/);
+
+									for(let v = 0; v < words_ext.length; v++)
+									{
+										let ini = words_ext[v].substring(0, 1);
+										acronym += ini;
+
+										if(!UTILS.containsString(COMMON, words_ext[v]))
+										{
+											acronym_short += ini;
+											fixAlisLib[words_ext[v]] = true;
+										}
+									}
+
+									if(alias_base !== alias_ext)
+									{
+										let words = UTILS.split(alias_base, /[_-]/);
+
+										for(let v = 0; v < words.length; v++)
+											if(!UTILS.containsString(COMMON, words[v]))
+												fixAlisLib[words[v]] = true;
+									}
+
+									if(acronym.length > 2)
+										fixAlisLib[acronym] = true;
+
+									if(acronym_short.length > 1)
+										fixAlisLib[acronym_short] = true;
+								}
+
+								delete fixAlisLib[""];
+
+								data.title = fixTitle;
+								data.aliases = Object.keys(fixAlisLib);
+								data.params.faction = fixFac;
+								data.params.subalignment = fixSub;
+								data.params.unique = fixUnique;
+
+								console.log(data.title + " (" + data.params.faction + " " + data.params.subalignment + ")");
+
+								//fs.writeFileSync(file, JSON.stringify(data));
+							}//*/
+
+							/*
+							if((data.fields[0] || {value: ""}).value.includes("\n" + TARGET))
+							{
+								console.log(data.title + " - " + data.params.faction + " (" + data.params.subalignment + ")");
+								//console.log(data.title + " - " + data.desc + "\n");
+
+								let halves = UTILS.split(data.fields[0].value, "\n" + TARGET);
+
+								if(halves[1] && (halves[1].substring(0, 2) === ": " || halves[1].substring(0, 2) === ":\n" || halves[1].substring(0, 2) === " -" || halves[1].substring(0, 2) === " —"))
+								{
+									data.fields[0].value = halves[0].trim();
+									data.fields.splice(1, 0, {name: TARGET + ":", value: halves[1].substring(2).trim()})
+
+									console.log(UTILS.display(data.fields) + '\n');
+								}
+
+								//for(let i = lines.length-1; i >= 0; i--)
+								//	if(lines[i].toLowerCase() === "goal: " + data.params.faction.toLowerCase() + " goal")
+								//		lines.splice(i, 1);
+
+								//data.fields[0].value = lines[0];
+								//for(let i = 1; i < lines.length; i++)
+								//	data.fields[0].value += '\n' + lines[i];
+
+								//console.log(data.fields[0].value + "\n");
+
+								//fs.writeFileSync(file, JSON.stringify(data));
+							}//*/
+						}
 					}
 				}
 			}
@@ -351,9 +481,9 @@ module.exports = (g) =>
 		{
 			let [id, num] = UTILS.split(arg, " ");
 
-			if(UTILS.isInt(id))
+			if(id.substring(0, 2) === "ID" && UTILS.isInt(id.substring(2)))
 			{
-				let obj = this.getObj(id, lockVer, asJSON);
+				let obj = this.getObj(id.substring(2), lockVer, asJSON);
 				if(obj) return obj;
 			}
 
@@ -522,6 +652,7 @@ module.exports = (g) =>
 						let newParams = UTILS.libSplit(info.getMeta("spawn_as", "").toLowerCase(), ";", ":");
 						let spawn_any = info.hasMeta("spawn_as_any") ? UTILS.split(info.getMeta("spawn_as_any").toLowerCase(), ",") : [];
 						let never_spawn_as = UTILS.libSplit(info.getMeta("never_spawn_as", "").toLowerCase(), ";", ":");
+						let spawn_if_parent = struct.getParent() && info.hasMeta("spawn_if_parent") ? UTILS.libSplit(info.getMeta("spawn_if_parent", "").toLowerCase(), ";", ":") : false;
 						let exclist = [];
 
 						for(let i = 0; i < paramNames.length; i++)
@@ -558,6 +689,33 @@ module.exports = (g) =>
 								{
 									allowed = false;
 									break;
+								}
+							}
+						}
+
+						if(allowed && spawn_if_parent && filters[0].length > 0)
+						{
+							allowed = false;
+
+							for(let i = 0; i < filters[0].length; i++)
+							{
+								let pinfo = struct.getParentObj(filters[0][i]);
+
+								if(pinfo)
+								{
+									for(let param in spawn_if_parent)
+									{
+										if(pinfo.getParam(param) && UTILS.containsString (
+												UTILS.toArgName(UTILS.split(spawn_if_parent[param], ','), true),
+												UTILS.toArgName(pinfo.getParam(param), true)))
+										{
+											allowed = true;
+											break;
+										}
+									}
+
+									if(allowed)
+										break;
 								}
 							}
 						}
@@ -617,6 +775,7 @@ module.exports = (g) =>
 							let newParams = UTILS.libSplit(info.getMeta("spawn_as", "").toLowerCase(), ";", ":");
 							let spawn_any = info.hasMeta("spawn_as_any") ? UTILS.split(info.getMeta("spawn_as_any").toLowerCase(), ",") : [];
 							let never_spawn_as = UTILS.libSplit(info.getMeta("never_spawn_as", "").toLowerCase(), ";", ":");
+							let spawn_if_parent = struct.getParent() && info.hasMeta("spawn_if_parent") ? UTILS.libSplit(info.getMeta("spawn_if_parent", "").toLowerCase(), ";", ":") : false;
 							let exclist = [];
 
 							for(let i = 0; i < paramNames.length; i++)
@@ -644,6 +803,33 @@ module.exports = (g) =>
 								{
 									allowed = false;
 									break;
+								}
+							}
+
+							if(allowed && spawn_if_parent && filters[0].length > 0)
+							{
+								allowed = false;
+
+								for(let i = 0; i < filters[0].length; i++)
+								{
+									let pinfo = struct.getParentObj(filters[0][i]);
+
+									if(pinfo)
+									{
+										for(let param in spawn_if_parent)
+										{
+											if(pinfo.getParam(param) && UTILS.containsString (
+													UTILS.toArgName(UTILS.split(spawn_if_parent[param], ','), true),
+													UTILS.toArgName(pinfo.getParam(param), true)))
+											{
+												allowed = true;
+												break;
+											}
+										}
+
+										if(allowed)
+											break;
+									}
 								}
 							}
 						}

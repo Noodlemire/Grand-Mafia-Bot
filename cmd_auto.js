@@ -3,7 +3,7 @@ const COMMON = ["a", "an", "the", "to", "of", "but", "or", "and", "with", "witho
 
 module.exports = (g) =>
 {
-	const {ELEVATED, SERVER_DATA, UTILS, StructObj, add_scmd, overwrite, Struct, path, fs} = g;
+	const {ELEVATED, SERVER_DATA, UTILS, StructObj, add_scmd, overwrite, Struct, path, fs, ignorePostNo} = g;
 	let i = 0;
 	
 	function register_scmd(name, param, title, desc, meta, func)
@@ -220,6 +220,7 @@ Single Line Field Name: Single Line Info Here
 		let iconURL = null;
 		let imageURL = null;
 		let meta = {};
+		let auth = message.author.id;
 		
 		let field = null;
 		let cont = 0;
@@ -229,7 +230,7 @@ Single Line Field Name: Single Line Info Here
 
 		for(let i = 0; i < paramNames.length; i++)
 			paramKeys[paramNames[i]] = i;
-			
+
 		for(let i = 0; i < sets.length; i++)
 		{
 		    let lines = UTILS.split(sets[i].trim(), "\n");
@@ -366,6 +367,24 @@ Single Line Field Name: Single Line Info Here
 						for(let t = 0; t < words.length; t++)										
 							aliasLib[words[t]] = true;
 					}
+					else if(UTILS.isOneOf(akey, "author_id", "authorid", "author"))
+						auth = value;
+					else if(UTILS.isOneOf(akey, "metadata", "meta"))
+					{
+						let data = UTILS.split((value || ""), "|");
+
+						for(let t = 0; t < data.length; t++)
+						{
+							let md = UTILS.split(data[t], ":");
+							let md_key = UTILS.toArgName(md[0].trim(), true);
+							let md_val = (md[1] || "").trim();
+
+							for(let j = 2; j < md.length; j++)
+								md_val += ':' + md[j].trim();
+
+							meta[md_key] = md_val;
+						}
+					}
 					else
 					{
 						if(field)
@@ -451,15 +470,17 @@ Single Line Field Name: Single Line Info Here
 		    fields[fields.length] = field;
 		}
 
-		let deferr = "<@" + message.author.id + ">";
+		let deferr = "<@" + message.author + ">";
 		let error = deferr;
 						    
 		if(postNo !== "")
 		{
 			desc = "Post " + postNo + (desc.length > 0 ? "\n" + desc.substring(0, desc.length-1) : "");
 
-			if(parseInt(postNo, 10) <= 0)
+			if(parseInt(postNo, 10) <= 0 && !meta.cannot_spawn)
 				meta.cannot_spawn = "true";
+
+			//if(message.guild.id === "877320177035923466" && ignorePostNo[postNo]) return;
 		}
 		else if(auto.epn)
 			error += "\n- Missing post number";
@@ -475,6 +496,10 @@ Single Line Field Name: Single Line Info Here
 
 		if(imageURL && (imageURL === "undefined" || !UTILS.isURL(imageURL)))
 			error += "\n- Malformed Image URL: " + imageURL;
+
+		for(let key in meta)
+			if(meta[key].length === 0)
+				error += "\n- Missing Value for Meta: " + key;
 
 		let paramLib = {};
 		for(let i = 0; i < paramNames.length; i++)
@@ -506,7 +531,7 @@ Single Line Field Name: Single Line Info Here
 
 		delete aliasLib[""];
 
-		let obj = new StructObj(message.guild.id, auto.struct, Object.keys(aliasLib), message.author.id, title, color, iconURL, imageURL, paramLib, fields, meta, desc);
+		let obj = new StructObj(message.guild.id, auto.struct, Object.keys(aliasLib), auth, title, color, iconURL, imageURL, paramLib, fields, meta, desc);
 		let outputText = "+Successfully " + (locked ? "queued" : "created") + " " + obj.getStructType() + " \"" + obj.getTitle() + "\" with ID" + (postNo === "" ? "" : " (Not Necessarily Post Number)") + ": " + obj.getID() + "\n\nRegistered commands:";
 		let aliases = obj.getAliases();
 

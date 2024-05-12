@@ -475,7 +475,7 @@ module.exports = (g) =>
 					}
 
 					obj.setAliases(newA);
-					overwrite(source);
+					overwrite(interaction);
 				}
 
 				let oldT = obj.getTitle(true);
@@ -617,7 +617,7 @@ module.exports = (g) =>
 
 			delete registerMenus[interaction.member.id];
 			interaction.editReply({components: []});
-			overwrite(source);
+			overwrite(interaction);
 		}).catch(console.error);
 
 		return true;

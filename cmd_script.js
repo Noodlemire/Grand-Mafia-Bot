@@ -77,7 +77,7 @@ module.exports = (g) =>
 		let loc = source.locals || (locals[pid] = locals[pid] || {});
 
 		if(UTILS.containsString(key, "{") || UTILS.containsString(key, "}") || UTILS.isNum(key) || key === '#')
-			throw "-ERROR: Invalid variable name: " + key;
+			throw "-Invalid variable name: " + key;
 
 		for(let n = 2; n < args.length; n++)
 			value = value + " " + args[n];
@@ -118,7 +118,7 @@ module.exports = (g) =>
 		let value = args[1] || "";
 
 		if(UTILS.containsString(key, "{") || UTILS.containsString(key, "}") || UTILS.isNum(key) || key === '#')
-			throw "-ERROR: Invalid variable name: " + key;
+			throw "-Invalid variable name: " + key;
 
 		for(let n = 2; n < args.length; n++)
 			value = value + " " + args[n];
@@ -164,7 +164,7 @@ module.exports = (g) =>
 
 		if(UTILS.containsString(key, "{") || UTILS.containsString(key, "}"))
 		{
-			UTILS.msg(source, "-ERROR: Invalid variable name: " + key);
+			UTILS.msg(source, "-Invalid variable name: " + key);
 			return;
 		}
 
@@ -208,10 +208,7 @@ module.exports = (g) =>
 				if(!args[i]) continue;
 
 				if(!UTILS.isNum(args[i]))
-				{
-					UTILS.msg(source, "-ERROR: Value '" + args[i] + "' is not a number!");
-					return;
-				}
+					throw "-Value '" + args[i] + "' is not a number!";
 
 				let n = parseFloat(args[i]);
 
@@ -234,10 +231,7 @@ module.exports = (g) =>
 						break;
 					case "Division":
 						if(n === 0)
-						{
-							UTILS.msg(source, "-ERROR: Cannot divide by zero!");
-							return;
-						}
+							throw "Cannot divide by zero!";
 
 						num /= n;
 						break;
@@ -291,7 +285,7 @@ module.exports = (g) =>
 				break;
 
 			case "foreach":
-				params = "<Var> <Start> <End> [Increment]";
+				params = "<Key> <Var> <Line-Separated Array...>";
 				break;
 
 			default:
@@ -309,7 +303,7 @@ module.exports = (g) =>
 			let conds = [];
 			let pid = source.member.id;
 			let loc = source.locals || (locals[pid] = locals[pid] || {});
-			let iter, inc, init, arr, elem;
+			let iter, inc, incStr, init, arr, arrStr, elem;
 
 			if(b === "for" || b === "foreach")
 			{
@@ -331,24 +325,27 @@ module.exports = (g) =>
 
 					if(args[3])
 					{
-						inc = subprocess(source, args[3]);
+						inc = subprocess(source, args[3], 0, true);
 
 						if(!UTILS.isNum(inc))
 							throw "Value '" + inc + "' is not a number!";
 
 						inc = parseFloat(inc);
+
+						if(!UTILS.isNum(args[3]))
+							incStr = args[3];
 					}
 
 					init = args[1];
 				}
 				else
 				{
-					let arrStr = args[2];
+					arrStr = args[2];
 
 					for(let i = 3; i < args.length; i++)
 						arrStr += '\n' + args[i];
 
-					arr = UTILS.split(subprocess(source, arrStr), '\n');
+					arr = UTILS.split(subprocess(source, arrStr, 0, true), '\n');
 
 					init = 1;
 					elem = args[1];
@@ -356,7 +353,7 @@ module.exports = (g) =>
 				}
 
 				iter = args[0];
-				conds[0] = {a: "{" + iter + "}", o: (inc > 0 ? "<=" : ">="), b: (b === "foreach" ? arr.length : args[2])};
+				conds[0] = {a: "{" + iter + "}", o: (inc > 0 || typeof inc === "string" ? "<=" : ">="), b: (b === "foreach" ? arr.length : args[2])};
 				loc[iter] = init;
 			}
 			else
@@ -369,15 +366,9 @@ module.exports = (g) =>
 						return;
 					}
 					if(!UTILS.isVar(args[i+1]) && !UTILS.isOneOf(args[i+1], ...choices))
-					{
-						UTILS.msg(source, "-ERROR: Operator '" + args[i+1] + "' must be one of: " + choices);
-						return;
-					}
+						throw "Operator '" + args[i+1] + "' must be one of: " + choices;
 					if(!UTILS.isVar(args[i+3]) && args[i+3] && !UTILS.isOneOf(args[i+3].toLowerCase(), ...andor))
-					{
-						UTILS.msg(source, "-ERROR: Parameter '" + args[i+3] + "' must be one of: " + andor);
-						return;
-					}
+						throw "Parameter '" + args[i+3] + "' must be one of: " + andor;
 
 					conds[conds.length] = {
 						a: args[i],
@@ -400,12 +391,14 @@ module.exports = (g) =>
 			{
 				body.iter = iter;
 				body.inc = inc;
+				body.incStr = incStr;
 				body.init = init;
 
 				if(body.type === "foreach")
 				{
 					body.elem = elem;
 					body.arr = arr;
+					body.arrStr = arrStr;
 				}
 			}
 
@@ -544,7 +537,21 @@ module.exports = (g) =>
 						loc[cmd.iter] = init;
 
 						if(cmd.type === "foreach")
+						{
+							cmd.arr = UTILS.split(subprocess(source, cmd.arrStr), '\n');
 							loc[cmd.elem] = cmd.arr[init-1];
+						}
+
+						if(cmd.incStr)
+						{
+							cmd.inc = subprocess(source, cmd.incStr);
+
+							if(!UTILS.isInt(cmd.inc))
+								throw "For loop's variable increment is not a number!";
+
+							cmd.inc = parseFloat(cmd.inc);
+							cmd.conds[0] = cmd.inc > 0 ? "<=" : ">=";
+						}
 					}
 
 					bodyProcess(source, body.commands, i, limit+1);
@@ -683,7 +690,7 @@ module.exports = (g) =>
 		let splits = UTILS.split(args[1], '\n');
 		let userexec = UTILS.bool(splits[0], false);
 
-		let script = source.attachments.first() || args[2];
+		let script = source.attachments && source.attachments.first() || args[2];
 		let ext = "";
 
 		if(typeof script !== "object" && splits.length > 1)
@@ -695,10 +702,10 @@ module.exports = (g) =>
 
 		if(typeof script === "object")
 		{
-			fetch(script.url).then((response) =>
+			fetch(script.url).catch((e) => UTILS.error(source, e)).then((response) =>
 			{
 				if(response.ok)
-					response.text().then((text) => set_script(source, title, userexec, text));
+					response.text().catch((e) => UTILS.error(source, e)).then((text) => set_script(source, title, userexec, text)).catch((e) => UTILS.error(source, e));
 				else
 					throw response.statusText;
 			});
@@ -721,7 +728,7 @@ module.exports = (g) =>
 			]);
 
 			SCRIPTDATA[source.member.id] = {title, userexec};
-			source.showModal(modal).catch(console.error);
+			source.showModal(modal).catch((e) => UTILS.error(source, e));
 		}
 		else
 			throw "No script provided.";

@@ -338,7 +338,7 @@ module.exports = (g) =>
 			if(success)
 				UTILS.msg(source, "+Data saved successfully.");
 			else
-				UTILS.msg(source, "-Error: " + (error || "Multiple simultaneous overwrites!"));
+				UTILS.msg(source, "-Error: " + error);
 		});
 	});
 
@@ -350,5 +350,15 @@ module.exports = (g) =>
 			all += args[i];
 
 		UTILS.msg(source, UTILS.split(all, '\n').length);
+	});
+
+	register_scmd(["to_arg", "toarg", "arg"], "<Text...>", "Convert Text To Argument", "Convert a message to a parameter-friendly format: Lowercase, and spaces replaced by underscores.", {minArgs: 1, slashOpts: [{datatype: "String", oname: "text", func: (str) => str.setDescription("The text that the bot convert to an argument.")}]}, (chn, source, e, args) =>
+	{
+		let txt = "";
+
+		for(let i = 0; i < args.length; i++)
+			txt += ' ' + args[i];
+
+		UTILS.msg(source, UTILS.toArgName(txt));
 	});
 };
