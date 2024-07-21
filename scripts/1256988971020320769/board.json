@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!exists 1} = False or {1} <= 1","!throw \"Must specify a board size of 2 or more!\"","!end","!for i 1 {1}","!if {i} = 1","!say {i}. {!data space start meta txt}","!else {i} = {1}","!say {i}. {!data space goal meta txt}","!else","!say {i}. {!data space {!rid space} meta txt}","!end","!end"]}

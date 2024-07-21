@@ -693,7 +693,7 @@ module.exports = (g) =>
 							}
 						}
 
-						if(allowed && spawn_if_parent && filters[0].length > 0)
+						if(allowed && spawn_if_parent && filters[0] && filters[0].length > 0)
 						{
 							allowed = false;
 
@@ -806,7 +806,7 @@ module.exports = (g) =>
 								}
 							}
 
-							if(allowed && spawn_if_parent && filters[0].length > 0)
+							if(allowed && spawn_if_parent && filters[0] && filters[0].length > 0)
 							{
 								allowed = false;
 

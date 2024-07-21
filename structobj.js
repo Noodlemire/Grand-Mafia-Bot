@@ -604,7 +604,8 @@ module.exports = (g) =>
 			if(this.#locked)
 				e.setFooter({text: "This " + this.#struct + " is not yet a part of the game."});
 
-			UTILS.embed(source, e);
+			if(source) UTILS.embed(source, e);
+			return e;
 		}
 
 		toJSON()

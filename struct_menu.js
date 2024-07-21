@@ -445,7 +445,7 @@ module.exports = (g) =>
 			if(menu.obj)
 			{
 				let obj = menu.obj;
-				let changelog = (locked ? "Queued e" : "E") + "dits to " + obj.getStructType() + " \"" + menu.title + "\" with ID: " + obj.getID();
+				let changelog = (locked ? "Queued e" : "E") + "dits to " + obj.getStructType() + " \"" + menu.title + "\" with ID: ID" + obj.getID();
 				let changed = false;
 
 				let oldA = obj.getAliases();
@@ -606,7 +606,7 @@ module.exports = (g) =>
 			else
 			{
 				let obj = new StructObj(interaction.guild.id, menu.struct, menu.aliases, menu.author, menu.title, menu.color, menu.iconURL, menu.imageURL, menu.params, menu.fields, menu.meta, menu.desc);
-				let outputText = "+Successfully " + (locked ? "queued" : "created") + " " + obj.getStructType() + " \"" + obj.getTitle(true) + "\" with ID: " + obj.getID() + "\n\nRegistered commands:";
+				let outputText = "+Successfully " + (locked ? "queued" : "created") + " " + obj.getStructType() + " \"" + obj.getTitle(true) + "\" with ID: ID" + obj.getID() + "\n\nRegistered commands:";
 				let aliases = obj.getAliases();
 
 				for(let i = 0; i < aliases.length; i++)

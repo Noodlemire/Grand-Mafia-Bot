@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!var limit {1}","!for i 2 {#}","!var pi {!sub {i} 1}","!var plr {{i}}","!say ({plr})\n__**Your Hand**__ (:cards: 7)","!for n 1 7","!if {!r 3} = 1","!say - {!rchoice :blue: :green: :red: :yellow: :black: :white: :gray: :brown: :lightblue: :lightgray: :lime:} {!r 0 9}","!else","!say - Special ({!r 11 {limit}})","!end","!end","!end"]}

@@ -7,7 +7,7 @@ const fetch = require("node-fetch");
 
 const PRE = "!";
 const ELEVATED = PermissionsBitField.Flags.ManageGuild;
-const STATS = ["hp", "atk", "dfn", "wrd", "ps", "spd"];
+const EXE_LIMIT = 10000;
 
 const FNAME = ".store.json";
 const FNAME2 = ".backup.json";
@@ -292,7 +292,7 @@ function process(source, limit, runInBodyMode)
 	args = args.splice(1);
 	limit = limit || 0;
 
-	if(limit > 1000) throw "-ERROR: Overflow";
+	if(limit > EXE_LIMIT) throw "-ERROR: Overflow";
 
 	let body = UTILS.getActiveBody(bodyinfo[auth.id]);
 	if(body && commands[cmd] && !commands[cmd].meta.runInBodyMode && !runInBodyMode)
@@ -382,7 +382,7 @@ function subprocess(source, arg, limit, runInBodyMode)
 			op = UTILS.findLastCharAfter(arg, "{", cl);
 			limit++;
 
-			if(limit > 1000) throw "-ERROR: Overflow";
+			if(limit > EXE_LIMIT) throw "-ERROR: Overflow";
 		}
 	}
 
@@ -446,6 +446,7 @@ const GLOBAL = {
 	CUSTOMDIR,
 	UTILS,
 	ELEVATED,
+	EXE_LIMIT,
 
 	Player,
 	Struct,

@@ -237,7 +237,9 @@ Single Line Field Name: Single Line Info Here
 		    
 		    for(let n = 0; n < lines.length; n++)
 			{
+				let hasSpace = UTILS.isOneOf(lines[n].substring(0, 2), " -", " *");
 				let line = lines[n].trim();
+				if(hasSpace) line = ' ' + line;
 
 				if(line.substring(0, 2) === "**" && title === "")
 				{
@@ -327,90 +329,110 @@ Single Line Field Name: Single Line Info Here
 							aliasLib[String(parseInt(postNo, 10))] = true;
 					}
 				}
-				else if((paramKeys[line.toLowerCase()] !== undefined || line.includes(":") || line.substring(0, 2) === "**") && (!field || n === 0))
-				{
-					let info = UTILS.split(line, ":");
-					let key = info[0].trim().substring(0, 256).replace(/[\*_~\`]/g, "");
-					let akey = UTILS.toArgName(key);
-					let value = info[1];
-
-					for(let t = 2; t < info.length; t++)
-						value += ":" + info[t];
-
-					if(value)
-						value = UTILS.trimFormatting(value);
-
-					if(value === "")
-						value = undefined;
-
-					if(paramKeys[akey] !== undefined)
-					{
-						if(value)
-							params[paramKeys[akey]] = value;
-						else
-							params[paramKeys[akey]] = "True";
-					}
-					else if(UTILS.isOneOf(akey, "color_hex", "colorhex", "color", "hex"))
-					{
-						color = (value || "undefined").toLowerCase();
-
-						if(color[0] === "#") color = color.substring(1);
-					}
-					else if(UTILS.isOneOf(akey, "icon_url", "iconurl", "icon"))
-						iconURL = value || "undefined";
-					else if(UTILS.isOneOf(akey, "image_url", "imageurl", "image"))
-						imageURL = value || "undefined";
-					else if(UTILS.isOneOf(akey, "alias", "aliases"))
-					{
-						let words = UTILS.split(value, " ");
-
-						for(let t = 0; t < words.length; t++)										
-							aliasLib[words[t]] = true;
-					}
-					else if(UTILS.isOneOf(akey, "author_id", "authorid", "author"))
-						auth = value;
-					else if(UTILS.isOneOf(akey, "metadata", "meta"))
-					{
-						let data = UTILS.split((value || ""), "|");
-
-						for(let t = 0; t < data.length; t++)
-						{
-							let md = UTILS.split(data[t], ":");
-							let md_key = UTILS.toArgName(md[0].trim(), true);
-							let md_val = (md[1] || "").trim();
-
-							for(let j = 2; j < md.length; j++)
-								md_val += ':' + md[j].trim();
-
-							meta[md_key] = md_val;
-						}
-					}
-					else
-					{
-						if(field)
-						{
-							field.name += HELP[cont] + ":";
-							fields[fields.length] = field;
-						}
-						
-						let f = {name: key, value: ""};
-						cont = 0;
-
-						if(value)
-							f.value = value;
-
-						while(f.value.length > 1024)
-						{
-							fields[fields.length] = {name: key + HELP[cont] + ":", value: f.value.substring(0, 1024)};
-							cont = Math.min(cont+1, HELP.length-1);
-							f.value = f.value.substring(1024);
-						}
-
-						field = f;
-					}
-				}
 				else
 				{
+					if(paramKeys[line.toLowerCase()] !== undefined || line.includes(":") || line.substring(0, 2) === "**") // && (!field || n === 0)
+					{
+						let info = UTILS.split(line, ":");
+						let key = info[0].trim().substring(0, 256).replace(/[\*_~\`]/g, "");
+						let akey = UTILS.toArgName(key);
+						let value = info[1];
+
+						for(let t = 2; t < info.length; t++)
+							value += ":" + info[t];
+
+						if(value)
+							value = UTILS.trimFormatting(value);
+
+						if(value === "")
+							value = undefined;
+
+						if(paramKeys[akey] !== undefined)
+						{
+							if(value)
+								params[paramKeys[akey]] = value;
+							else
+								params[paramKeys[akey]] = "True";
+
+							continue;
+						}
+						else if(UTILS.isOneOf(akey, "color_hex", "colorhex", "color", "hex"))
+						{
+							color = (value || "undefined").toLowerCase();
+
+							if(color[0] === "#") color = color.substring(1);
+
+							continue;
+						}
+						else if(UTILS.isOneOf(akey, "icon_url", "iconurl", "icon"))
+						{
+							iconURL = value || "undefined";
+							continue;
+						}
+						else if(UTILS.isOneOf(akey, "image_url", "imageurl", "image"))
+						{
+							imageURL = value || "undefined";
+							continue;
+						}
+						else if(UTILS.isOneOf(akey, "alias", "aliases"))
+						{
+							let words = UTILS.split(value, " ");
+
+							for(let t = 0; t < words.length; t++)										
+								aliasLib[words[t]] = true;
+
+							continue;
+						}
+						else if(UTILS.isOneOf(akey, "author_id", "authorid", "author"))
+						{
+							auth = value;
+							continue;
+						}
+						else if(UTILS.isOneOf(akey, "metadata", "meta"))
+						{
+							let data = UTILS.split((value || ""), "|");
+
+							for(let t = 0; t < data.length; t++)
+							{
+								let md = UTILS.split(data[t], ":");
+								let md_key = UTILS.toArgName(md[0].trim(), true);
+								let md_val = (md[1] || "").trim();
+
+								for(let j = 2; j < md.length; j++)
+									md_val += ':' + md[j].trim();
+
+								meta[md_key] = md_val;
+							}
+
+							continue;
+						}
+						else if(n === 0)
+						{
+							if(field)
+							{
+								field.name += HELP[cont] + ":";
+								fields[fields.length] = field;
+							}
+							
+							let f = {name: key, value: ""};
+							cont = 0;
+
+							if(value)
+								f.value = value;
+
+							while(f.value.length > 1024)
+							{
+								fields[fields.length] = {name: key + HELP[cont] + ":", value: f.value.substring(0, 1024)};
+								cont = Math.min(cont+1, HELP.length-1);
+								f.value = f.value.substring(1024);
+							}
+
+							field = f;
+
+							continue;
+						}
+					}
+					
 					if(field)
 					{
 						if(field.value.length + line.length > 1024)
@@ -532,7 +554,7 @@ Single Line Field Name: Single Line Info Here
 		delete aliasLib[""];
 
 		let obj = new StructObj(message.guild.id, auto.struct, Object.keys(aliasLib), auth, title, color, iconURL, imageURL, paramLib, fields, meta, desc);
-		let outputText = "+Successfully " + (locked ? "queued" : "created") + " " + obj.getStructType() + " \"" + obj.getTitle() + "\" with ID" + (postNo === "" ? "" : " (Not Necessarily Post Number)") + ": " + obj.getID() + "\n\nRegistered commands:";
+		let outputText = "+Successfully " + (locked ? "queued" : "created") + " " + obj.getStructType() + " \"" + obj.getTitle() + "\" with ID" + (postNo === "" ? "" : " (Not Necessarily Post Number)") + ": ID" + obj.getID() + "\n\nRegistered commands:";
 		let aliases = obj.getAliases();
 
 		for(let i = 0; i < aliases.length; i++)

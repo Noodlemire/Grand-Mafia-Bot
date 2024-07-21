@@ -84,7 +84,7 @@ module.exports = (g) =>
 		setBool(tagName, val)
 		{
 			if(!tagName) return UTILS.print("-ERROR: Missing tagName!");
-			if(!val) return UTILS.print("-ERROR: Missing val!");
+			if(val === undefined) return UTILS.print("-ERROR: Missing val!");
 
 			this.tags[tagName.toLowerCase()] = String(val);
 		}

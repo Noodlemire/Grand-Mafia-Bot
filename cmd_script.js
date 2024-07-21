@@ -11,7 +11,7 @@ function commaCheck(UTILS, t, s)
 
 module.exports = (g) =>
 {
-	const {PRE, CUSTOMDIR, UTILS, commands, add_scmd, overwrite, process, subprocess, locals, bodyinfo, SERVER_DATA, path, fs, fetch, ELEVATED, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle} = g;
+	const {PRE, CUSTOMDIR, UTILS, EXE_LIMIT, commands, add_scmd, overwrite, process, subprocess, locals, bodyinfo, SERVER_DATA, path, fs, fetch, ELEVATED, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle} = g;
 	let i = 0;
 
 	function firstname(p)
@@ -497,7 +497,7 @@ module.exports = (g) =>
 		limit = limit || 0;
 		let loc = source.locals || locals[source.member.id];
 
-		if(limit > 1000)
+		if(limit > EXE_LIMIT)
 			return;
 
 		for(let i = 0; i < conds.length; i++)

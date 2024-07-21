@@ -361,4 +361,9 @@ module.exports = (g) =>
 
 		UTILS.msg(source, UTILS.toArgName(txt));
 	});
+
+	register_scmd(["my_id", "myid", "me"], "", "My ID", "Show your unique User ID number.", (chn, source, e, args) =>
+	{
+		UTILS.msg(source, source.author.id);
+	});
 };

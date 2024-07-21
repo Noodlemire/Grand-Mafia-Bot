@@ -942,7 +942,7 @@ module.exports = (g) =>
 			let result = sdata[sname].roll(chn, source, e, args);
 
 			if(result)
-				UTILS.msg(source, result.info.getID());
+				UTILS.msg(source, "ID" + result.info.getID());
 			else
 				throw "-No results for query: " + UTILS.display(args);
 		});
@@ -992,5 +992,79 @@ module.exports = (g) =>
 			else
 				throw "Cannot output value of type: " + typeof cur;
 		});
+	});
+
+	function censor(length)
+	{
+		let c = "";
+
+		for(let i = 0; i < length; i++)
+			c = c + "█";
+
+		return c;
+	}
+
+	const lastGT = {};
+
+	register_scmd(["guess_the", "guessthe", "guess"], "<structure>", "Guess The <Object>", "Load a random object of a given Structure with the name hidden. Try to guess what it is!", {minArgs: 1, slashOpts:
+		[
+			{datatype: "String", oname: "structure", func: (str) => str.setDescription("What type of object will you guess?")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		UTILS.inherit(SERVER_DATA, source, (data) =>
+		{
+			let sdata = data.structs || {};
+			let sname = UTILS.toArgName(args[0], true);
+
+			if(!sdata[sname])
+				throw "There is no Structure with the name: " + sname;
+
+			let obj = sdata[sname].roll(chn, source, e, []);
+
+			if(!obj)
+				throw "There was no " + args[0] + " that could be rolled!";
+
+			lastGT[chn.id] = {
+				author: {name: obj.info.getTitle(), iconURL: obj.info.getIconURL()},
+				desc: obj.info.getDesc(),
+				color: obj.info.getColor(),
+				creator: obj.info.getAuthor()
+			};
+
+			obj.info.setAuthor("[REDACTED]");
+			e = obj.info.embed();
+			let truename = e.data.author.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+			let censorname = censor(truename.length);
+
+			e.setAuthor({name: "Guess The " + UTILS.titleCase(args[0])});
+			e.setColor("808080");
+			e.setImage();
+			e.setDescription("Try to guess the name of this " + args[0] + " based on the info below! Use `!answer` to check if you were correct or not.");
+
+			for(let i = 0; i < e.data.fields.length; i++)
+			{
+				e.data.fields[i].name = e.data.fields[i].name.replace(new RegExp(truename, 'ig'), censorname);
+				e.data.fields[i].value = e.data.fields[i].value.replace(new RegExp(truename, 'ig'), censorname);
+			}
+
+			UTILS.embed(source, e);
+		});
+	});
+
+	register_scmd(["answer"], "", "GTO Answer", "View the answer of the previous use of 'Guess the Object' from within this channel.", (chn, source, e, args) =>
+	{
+		let last = lastGT[chn.id];
+
+		if(!last)
+			throw "You must use the Guess the Object command before recieving an answer.";
+
+		e.setAuthor(last.author);
+		e.setDescription(last.desc);
+		e.setColor(last.color);
+		e.addFields([{name: "Created by:", value: "<@" + last.creator + ">"}]);
+
+		UTILS.embed(source, e);
 	});
 };
