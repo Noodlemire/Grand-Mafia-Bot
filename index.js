@@ -1,4 +1,4 @@
-const {Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionsBitField} = require("discord.js");
+const {Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionsBitField, StickerType} = require("discord.js");
 const {REST} = require("@discordjs/rest");
 const {Routes} = require("discord-api-types/v9");
 const fs = require("fs");
@@ -24,7 +24,6 @@ const conflicts = {};
 const menus = {};
 const locals = {};
 const bodyinfo = {};
-const ignorePostNo = {};
 
 const UTILS = require("./utils.js")({bot, ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, menus, interactions, fs, path});
 
@@ -310,7 +309,7 @@ function process(source, limit, runInBodyMode)
 
 		if(meta.slashOnly)
 			UTILS.msg(source, "-This command is only usable in Slash Command form.");
-		else if(meta.adminOnly && !source.member.permissions.has(ELEVATED))
+		else if(meta.adminOnly && !source.member.permissions.has(ELEVATED) && !source.elevated)
 			UTILS.msg(source, "-You do not have elevated permissions for this bot.");
 		else
 		{
@@ -368,12 +367,13 @@ function subprocess(source, arg, limit, runInBodyMode)
 					guild: source.guild,
 					channel: source.channel,
 					locals: source.locals,
-					print: source.print
+					print: source.print,
+					elevated: source.elevated
 				}, limit+1, runInBodyMode) || "").trim() + arg.substring(cl+1);
 			}
 			else if(loc && loc[subcmd] !== undefined)
 				arg = arg.substring(0, op) + loc[subcmd] + arg.substring(cl+1);
-			else if(sdata && sdata.globals && sdata.globals[subcmd] !== undefined && source.member.permissions.has(ELEVATED))
+			else if(sdata && sdata.globals && sdata.globals[subcmd] !== undefined && (source.member.permissions.has(ELEVATED) || source.elevated))
 				arg = arg.substring(0, op) + sdata.globals[subcmd] + arg.substring(cl+1);
 			else
 				arg = arg.substring(0, op) + subcmd + arg.substring(cl+1);
@@ -392,7 +392,7 @@ function subprocess(source, arg, limit, runInBodyMode)
 const Player = require("./player.js")({UTILS});
 const StructObj = require("./structobj.js")({UTILS, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder});
 const registerMenus = require("./struct_menu.js")({UTILS, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder, StructObj, add_gcmd, overwrite, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle});
-const Struct = require("./struct.js")({PRE, UTILS, ELEVATED, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder, StructObj, add_gcmd, ActionRowBuilder, ButtonBuilder, ButtonStyle, registerMenus, ignorePostNo});
+const Struct = require("./struct.js")({PRE, UTILS, ELEVATED, SERVER_DATA, CUSTOMDIR, path, fs, EmbedBuilder, StructObj, add_gcmd, ActionRowBuilder, ButtonBuilder, ButtonStyle, registerMenus});
 
 if(!fs.existsSync(CUSTOMDIR))
 	fs.mkdirSync(CUSTOMDIR);
@@ -426,8 +426,6 @@ fs.readFile(FNAME, (err1, data) =>
 			if(SERVER_DATA[id].structs)
 				for(let s in SERVER_DATA[id].structs)
 					SERVER_DATA[id].structs[s] = new Struct(id, SERVER_DATA[id].structs[s]);
-
-			fs.writeFileSync("numbers.json", JSON.stringify(ignorePostNo));
 		}
 	}
 
@@ -481,8 +479,6 @@ const GLOBAL = {
 	path,
 	fs,
 	fetch,
-
-	ignorePostNo
 };
 
 const autoFunc = require("./cmd_auto.js")(GLOBAL);
@@ -532,34 +528,36 @@ bot.on("messageCreate", (message) =>
 					let addedText = "";
 					let output = new EmbedBuilder();
 					let sender = UTILS.getPlayerByID(SERVER_DATA[message.guild.id].players, message.author.id);
+					let stickers = [];
 
 					if(sender && sender.tags.relay_nick)
 					{
 						let nicklib = UTILS.libSplit(sender.tags.relay_nick, ",", ":");
 
-						if(typeof nicklib === "string")
+						if(!sender.tags.relay_nick.includes(',') && !sender.tags.relay_nick.includes(':'))
 							output.setAuthor({name: sender.tags.relay_nick});
 						else if(nicklib[message.channel.id])
 							output.setAuthor({name: nicklib[message.channel.id]});
 
-						if(!output.author)
+						if(!output.data.author)
 							for(let nick in nicklib)
 								if(!nicklib[nick])
 									output.setAuthor({name: nick});
 					}
 
-					if(!output.author)
+					if(!output.data.author)
 					{
 						output.setAuthor({name: message.member.displayName, iconURL: message.author.avatarURL()});
 						output.setColor(message.member.displayHexColor);
 					}
 
 					output.setTimestamp();
-					output.setDescription(message.content);
+					if(message.content && message.content.length > 0)
+						output.setDescription(message.content);
 
-					if(output.description)
+					if(output.data.description)
 					{
-						let mentions = getMentions(output.description);
+						let mentions = getMentions(output.data.description);
 
 						for(let n = 0; n < mentions.length; n++)
 							addedText = addedText + " " + mentions[n];
@@ -567,10 +565,10 @@ bot.on("messageCreate", (message) =>
 
 					for(const [k, s] of message.stickers)
 					{
-						if(!output.image)
-							output.setImage(s.url);
+						if(!s.guild)
+							stickers.push(s);
 						else
-							output.addFields([{name: s.name, value: s.url}]);
+							output.addFields([{name: "Sticker: " + s.name, value: s.url}]);
 					}
 
 					for(const [k, a] of message.attachments)
@@ -578,7 +576,7 @@ bot.on("messageCreate", (message) =>
 						let title = a.contentType;
 						if(!title) title = "Attachment";
 
-						if(!output.image && title.substring(0, 5) === "image")
+						if(!output.data.image && title.substring(0, 5) === "image")
 							output.setImage(a.url);
 						else
 							output.addFields([{name: "Attached: " + title, value: a.url}]);
@@ -589,13 +587,16 @@ bot.on("messageCreate", (message) =>
 					for(let n = 0; n < message.embeds.length; n++)
 						embeds[embeds.length] = message.embeds[n];
 
-					ch2.send({content: (addedText.length > 0 ? addedText : null), embeds});
+					ch2.send({content: (addedText.length > 0 ? addedText : null), embeds, stickers});
 				}
 			}
 		}
 	}
 
-	if(message.author.id !== bot.user.id && data && data.auto && data.structs
+	if(message.author.id === bot.user.id)
+		return;
+
+	if(data && data.auto && data.structs
 			&& data.auto[message.channel.id] && data.structs[data.auto[message.channel.id].struct])
 	{
 		let output = message.guild.channels.cache.get(data.auto[message.channel.id].output);

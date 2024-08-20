@@ -776,15 +776,15 @@ module.exports = (g) =>
 
 		source.guild.members.fetch(uID).catch(console.error).then((user) =>
 		{
-			if(!user)
-			{
-				UTILS.msg(source, "-No player found with the ID: " + uID);
-				return;
-			}
+			//if(!user)
+			//{
+			//	UTILS.msg(source, "-No player found with the ID: " + uID);
+			//	return;
+			//}
 
 			obj.setAuthor(uID);
 			obj.save();
-			UTILS.msg(source, "+Successfully set owner of '" + obj.getTitle(true) + "' to: " + user.displayName);
+			UTILS.msg(source, "+Successfully set owner of '" + obj.getTitle(true) + "' to: " + (user ? user.displayName : uID));
 		});
 	});
 

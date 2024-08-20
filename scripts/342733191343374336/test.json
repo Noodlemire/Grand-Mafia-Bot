@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!for i 1 10","!if {i} <= 2 or {i} = 5 or {i} = 6 or {i} = 9","!echo {i}","!else","!say {i}","!end","!end"]}

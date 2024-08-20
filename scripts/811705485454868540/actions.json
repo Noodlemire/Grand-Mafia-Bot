@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!exists ac} = False or {ac} <= 0","!throw There are no actions to show.","!end","!for i 1 {ac}","!say {i}. <@{users{i}}>: {acts{i}}","!end"]}

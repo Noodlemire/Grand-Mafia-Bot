@@ -685,9 +685,9 @@ module.exports = (g) =>
 		let output = "Relays:";
 
 		for(let i = 0; i < rdata.length; i++)
-			output = output + "\n" + i + ". <#" + rdata[i].inp + "> to <#" + rdata[i].out + ">";
+			output = output + "\n" + i + ") <#" + rdata[i].inp + "> to <#" + rdata[i].out + ">";
 
-		UTILS.msg(source, output);
+		UTILS.msg(source, output, true);
 	});
 
 	register_scmd(["del_relay", "delrelay"], "<Number 1> [Number 2] [Number N]...", "Delete Relay", "Delete a given relay, or list of relays. Use the 'list_relays' command to check each relay's number.", {adminOnly: true, minArgs: 1, slashOpts:

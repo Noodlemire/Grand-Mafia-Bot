@@ -172,9 +172,6 @@ module.exports = (g) =>
 								}
 							}
 
-							if(postNo !== "")
-								ignorePostNo[postNo] = true;
-
 							let TARGET = " - ";
 
 							/*if(data.title.includes(TARGET))

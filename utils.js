@@ -631,7 +631,7 @@ module.exports = (g) =>
 	UTILS.printReturn = () =>
 	{
 		let m = msg;
-		if(diff) m += "\n'''"
+		if(diff) m += "\n```"
 
 		msg = "";
 		diff = false;

@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!var rl {1}","!for i 2 {#}","!var rl {rl} {{i}}","!end","!foreach i r {rl}","!say {i}. {r}!","!end"]}

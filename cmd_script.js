@@ -168,7 +168,7 @@ module.exports = (g) =>
 			return;
 		}
 
-		if(loc[key] || (source.member.permissions.has(ELEVATED) && globals[key]))
+		if(loc[key] || ((source.member.permissions.has(ELEVATED) || source.elevated) && globals[key]))
 			UTILS.msg(source, "True");
 		else
 			UTILS.msg(source, "False");
@@ -563,7 +563,8 @@ module.exports = (g) =>
 						guild: source.guild,
 						channel: source.channel,
 						locals: source.locals,
-						print: source.print
+						print: source.print,
+						elevated: source.elevated
 					});
 			}
 
@@ -622,7 +623,7 @@ module.exports = (g) =>
 			if(nonScript)
 			{
 				let result = UTILS.printReturn();
-				UTILS.msg(source, result === "" ? "+Complete." : result);
+				UTILS.msg(source, result === "" ? "+Complete." : result, result !== "");
 			}
 
 			delete bodyinfo[pid];
@@ -749,7 +750,7 @@ module.exports = (g) =>
 		return true;
 	});
 
-	register_scmd(["execute", "exec", "e"], "<script> [args...]", "Execute Script", "Run a script.", {minArgs: 1, slashOpts:
+	register_scmd(["execute", "exe", "e"], "<script> [args...]", "Execute Script", "Run a script.", {minArgs: 1, slashOpts:
 		[
 			{datatype: "String", oname: "name", func: (str) => str.setDescription("Name of the script to create/replace. (Only allows alphanumeric characters, `-`, and `_`)")},
 			{datatype: "String", oname: "parameter_1", func: (str) => str.setDescription("Set value of {1} if the script uses it.")},
@@ -794,7 +795,8 @@ module.exports = (g) =>
 			guild: source.guild,
 			channel: source.channel,
 			locals: scriptLocals,
-			print: {txt: "", diff: false}
+			print: {txt: "", diff: false},
+			elevated: script.userexec
 		};
 
 		for(let i = 0; i < script.lines.length; i++)

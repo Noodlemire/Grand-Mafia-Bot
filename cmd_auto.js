@@ -3,7 +3,7 @@ const COMMON = ["a", "an", "the", "to", "of", "but", "or", "and", "with", "witho
 
 module.exports = (g) =>
 {
-	const {ELEVATED, SERVER_DATA, UTILS, StructObj, add_scmd, overwrite, Struct, path, fs, ignorePostNo} = g;
+	const {ELEVATED, SERVER_DATA, UTILS, StructObj, add_scmd, overwrite, Struct, path, fs} = g;
 	let i = 0;
 	
 	function register_scmd(name, param, title, desc, meta, func)
@@ -501,8 +501,6 @@ Single Line Field Name: Single Line Info Here
 
 			if(parseInt(postNo, 10) <= 0 && !meta.cannot_spawn)
 				meta.cannot_spawn = "true";
-
-			//if(message.guild.id === "877320177035923466" && ignorePostNo[postNo]) return;
 		}
 		else if(auto.epn)
 			error += "\n- Missing post number";

@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!if {#} < 1","!throw You must provide an action!","!end","!var action {1}","!for i 2 {#}","!var action {action} {{i}}","!end","!if {!exists ac} = False","!g ac 1","!else","!g ac {!add {ac} 1}","!end","!g users{ac} {!me}","!g acts{ac} {action}","!overwrite","!say Successfully submitted: {action}"]}
