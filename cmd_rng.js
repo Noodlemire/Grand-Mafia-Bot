@@ -80,7 +80,7 @@ module.exports = (g) =>
 			UTILS.msg(source, out);
 	});
 	
-	register_scmd(["random_choice", "randomchoice", "rchoice", "choice", "rc"], "<option 1> <option 2> [option N]...", "Random Choice", "Randomly choose an option. The Slash Command is limited to 10 options, but prefix form is unlimited.", {minArgs: 2, slashOpts:
+	register_scmd(["random_choice", "randomchoice", "rchoice", "choice", "rc"], "<option 1> [option 2] [option N]...", "Random Choice", "Randomly choose an option. The Slash Command is limited to 10 options, but prefix form is unlimited.", {minArgs: 1, slashOpts:
 		[
 			{datatype: "String", oname: "option1", func: (str) => str.setDescription("An option.")},
 			{datatype: "String", oname: "option2", func: (str) => str.setDescription("An option.")},

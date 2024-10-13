@@ -748,10 +748,14 @@ module.exports = (g) =>
 
 				for(let i = 0; i < args.length; i++)
 				{
-					filters[i] = UTILS.split(args[i], ":");
+					if(args[i])
+					{
+						filters[i] = UTILS.split(args[i], ":");
 
-					for(let n = 0; n < filters[i].length; n++)
-						filters[i][n] = UTILS.toArgName(filters[i][n], true);
+						for(let n = 0; n < filters[i].length; n++)
+							if(filters[i][n] !== '*')
+								filters[i][n] = UTILS.toArgName(filters[i][n], true);
+					}
 				}
 
 				for(let id = 0; id < struct.getMaxID(); id++)
@@ -789,14 +793,18 @@ module.exports = (g) =>
 
 								for(let n = 0; n < paramlist[i].length; n++)
 									paramlist[i][n] = UTILS.toArgName(paramlist[i][n], true);
-							for(let n = 0; n < exclist[i].length; n++)
-								exclist[i][n] = UTILS.toArgName(exclist[i][n], true);
+								for(let n = 0; n < exclist[i].length; n++)
+									exclist[i][n] = UTILS.toArgName(exclist[i][n], true);
 							}
 
 							for(let i = 0; i < filters.length; i++)
 							{
-								if(filters[i].length > 0 && ((!UTILS.matchOne(paramlist[i], filters[i]) &&
-									!UTILS.containsString(spawn_any, paramNames[i])) || UTILS.matchOne(exclist[i], filters[i])))
+								if(filters[i][0] === '*') continue;
+
+								if(filters[i].length > 0
+										&& ((!UTILS.matchOne(paramlist[i], filters[i])
+										&& !UTILS.containsString(spawn_any, paramNames[i]))
+										|| UTILS.matchOne(exclist[i], filters[i])))
 								{
 									allowed = false;
 									break;

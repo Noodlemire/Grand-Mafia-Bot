@@ -12,6 +12,7 @@ const EXE_LIMIT = 10000;
 const FNAME = ".store.json";
 const FNAME2 = ".backup.json";
 const CUSTOMDIR = "custom";
+const SCRIPTDIR = "scripts";
 
 const bot = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent]});
 
@@ -442,6 +443,7 @@ fs.readFile(FNAME, (err1, data) =>
 const GLOBAL = {
 	PRE,
 	CUSTOMDIR,
+	SCRIPTDIR,
 	UTILS,
 	ELEVATED,
 	EXE_LIMIT,

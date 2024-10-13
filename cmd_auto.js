@@ -3,7 +3,7 @@ const COMMON = ["a", "an", "the", "to", "of", "but", "or", "and", "with", "witho
 
 module.exports = (g) =>
 {
-	const {ELEVATED, SERVER_DATA, UTILS, StructObj, add_scmd, overwrite, Struct, path, fs} = g;
+	const {SCRIPTDIR, ELEVATED, SERVER_DATA, UTILS, StructObj, add_scmd, overwrite, process, Struct, path, fs} = g;
 	let i = 0;
 	
 	function register_scmd(name, param, title, desc, meta, func)
@@ -202,7 +202,9 @@ Single Line Field Name: Single Line Info Here
 
 	return (struct, auto, message, output, locked) =>
 	{
-		if(!message.member.permissions.has(ELEVATED) && !SERVER_DATA[message.guild.id].user_submission)
+		let serverid = message.guild.id;
+
+		if(!message.member.permissions.has(ELEVATED) && !SERVER_DATA[serverid].user_submission)
 		{
 			UTILS.msg(message, "-You do not have permission to create new objects.");
 			return;
@@ -292,11 +294,51 @@ Single Line Field Name: Single Line Info Here
 							aliasLib[acronym_short] = true;
 					}
 
+					let file = path.join(SCRIPTDIR, serverid, struct.getName() + "_param.json");
+					let words = [];
+
 					if(data)
 					{
 						data = data.trim();
-						let words = UTILS.split(data.substring(1, data.length-1), " ");
+						words = UTILS.split(data.substring(1, data.length-1), " ");
+					}
 
+					if(fs.existsSync(file))
+					{
+						let scriptLocals = {};
+						let script = JSON.parse(fs.readFileSync(file, "utf8"));
+
+						for(let t = 0; t < words.length; t++)
+							scriptLocals[String(t+1)] = words[t];
+
+						scriptLocals['#'] = words.length;
+
+						let subSource = {
+							member: message.member,
+							guild: message.guild,
+							channel: message.channel,
+							locals: scriptLocals,
+							print: {txt: "", diff: false},
+							elevated: script.userexec
+						};
+
+						for(let t = 0; t < script.lines.length; t++)
+						{
+							subSource.content = script.lines[t];
+							process(subSource);
+						}
+
+						if(subSource.print.diff)
+							subSource.print.txt += "\n```";
+
+						if(subSource.print.txt.length > 0)
+						{
+							let printLines = UTILS.split(subSource.print.txt, '\n');
+							sets.push(...printLines);
+						}
+					}
+					else
+					{
 						for(let t = 0; t < words.length; t++)
 						{
 							let param = words[t];
@@ -394,7 +436,7 @@ Single Line Field Name: Single Line Info Here
 
 							for(let t = 0; t < data.length; t++)
 							{
-								let md = UTILS.split(data[t], ":");
+								let md = UTILS.split(data[t], ":", true);
 								let md_key = UTILS.toArgName(md[0].trim(), true);
 								let md_val = (md[1] || "").trim();
 
@@ -501,6 +543,8 @@ Single Line Field Name: Single Line Info Here
 
 			if(parseInt(postNo, 10) <= 0 && !meta.cannot_spawn)
 				meta.cannot_spawn = "true";
+
+			if(!meta.post) meta.post = postNo;
 		}
 		else if(auto.epn)
 			error += "\n- Missing post number";

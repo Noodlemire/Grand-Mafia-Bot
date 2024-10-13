@@ -1,4 +1,3 @@
-const SCRIPTDIR = "scripts";
 const SCRIPTDATA = {};
 
 function commaCheck(UTILS, t, s)
@@ -11,7 +10,7 @@ function commaCheck(UTILS, t, s)
 
 module.exports = (g) =>
 {
-	const {PRE, CUSTOMDIR, UTILS, EXE_LIMIT, commands, add_scmd, overwrite, process, subprocess, locals, bodyinfo, SERVER_DATA, path, fs, fetch, ELEVATED, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle} = g;
+	const {PRE, CUSTOMDIR, SCRIPTDIR, UTILS, EXE_LIMIT, commands, add_scmd, overwrite, process, subprocess, locals, bodyinfo, SERVER_DATA, path, fs, fetch, ELEVATED, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle} = g;
 	let i = 0;
 
 	function firstname(p)
@@ -241,6 +240,131 @@ module.exports = (g) =>
 			UTILS.msg(source, String(num));
 		});
 	}
+
+	register_scmd("split", "<Split By> <Text...>", "Split", "Separate a body of text by a given value.",
+	{
+		minArgs: 2, slashOpts:
+		[
+			{datatype: "String", oname: "split_by", func: (str) => str.setDescription("Split provided text by each occurrence of this phrase.")},
+			{datatype: "String", oname: "text", func: (str) => str.setDescription("The text that will be split.")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		let d = args[0];
+		let s = args[1];
+
+		for(let i = 2; i < args.length; i++)
+			s += ' ' + args[i];
+
+		let splits = UTILS.split(s, d);
+		let output = (splits[0] || "").trim();
+
+		for(let i = 1; i < splits.length; i++)
+			output += '\n' + (splits[i] || "").trim();
+
+		if(output)
+			UTILS.msg(source, output);
+		else
+			throw "There was no output.";
+	});
+
+	register_scmd(["character_at", "characterat", "char_at", "charat", "char", "at"], "<Position> <Text...>", "Character At", "Find the character at a numbered position (starting at 1), or 'first' or 'last'.",
+	{
+		minArgs: 2, slashOpts:
+		[
+			{datatype: "String", oname: "position", func: (str) => str.setDescription("Numbered position (starting at 1) to search for, or 'first' or 'last'.")},
+			{datatype: "String", oname: "text", func: (str) => str.setDescription("The text that will be checked.")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		let pos;
+		let text = args[1];
+
+		for(let i = 2; i < args.length; i++)
+			text += ' ' + args[i];
+
+		switch(args[0].toLowerCase())
+		{
+			case "first": pos = 0; break;
+			case "last": pos = text.length-1; break;
+			default:
+				if(UTILS.isInt(args[0]))
+					pos = parseInt(args[0], 10) - 1;
+				else
+					throw "'" + args[0] + "' is not a valid number!";
+
+				break;
+		}
+
+		let char = text.substring(pos, pos+1);
+
+		switch(char)
+		{
+			case ' ': char = "SPACE"; break;
+			case '\n': char = "NEWLINE"; break;
+			case '\t': char = "INDENT"; break;
+			case '': char = "NULL"; break;
+		}
+
+		UTILS.msg(source, char);
+	});
+
+	register_scmd(["lowercase", "lower"], "<Text...>", "Lowercase", "Convert provided text to lowercase.",
+	{
+		minArgs: 1, slashOpts:
+		[
+			{datatype: "String", oname: "text", func: (str) => str.setDescription("The text that will be converted.")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		let text = args[0];
+
+		for(let i = 1; i < args.length; i++)
+			text += ' ' + args[i];
+
+		UTILS.msg(source, text.toLowerCase());
+	});
+
+	register_scmd(["uppercase", "upper"], "<Text...>", "Uppercase", "Convert provided text to uppercase.",
+	{
+		minArgs: 1, slashOpts:
+		[
+			{datatype: "String", oname: "text", func: (str) => str.setDescription("The text that will be converted.")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		let text = args[0];
+
+		for(let i = 1; i < args.length; i++)
+			text += ' ' + args[i];
+
+		UTILS.msg(source, text.toUpperCase());
+	});
+
+	register_scmd(["is_one_of", "isoneof", "ioo"], "<Target> <Option 1> [Option 2] [Option N...]", "Is One Of", "Check if a target phrase is included in a list of options. Returns 'True' or 'False'.",
+	{
+		minArgs: 2, slashOpts:
+		[
+			{datatype: "String", oname: "target", func: (str) => str.setDescription("The phrase that will be checked for.")},
+			{datatype: "String", oname: "option_1", func: (str) => str.setDescription("Something that the Target could be.")},
+			{datatype: "String", oname: "option_2", func: (str) => str.setDescription("Something that the Target could be.")},
+			{datatype: "String", oname: "option_3", func: (str) => str.setDescription("Something that the Target could be.")},
+			{datatype: "String", oname: "option_4", func: (str) => str.setDescription("Something that the Target could be.")},
+			{datatype: "String", oname: "option_5", func: (str) => str.setDescription("Something that the Target could be.")},
+			{datatype: "String", oname: "option_6", func: (str) => str.setDescription("Something that the Target could be.")},
+			{datatype: "String", oname: "option_7", func: (str) => str.setDescription("Something that the Target could be.")},
+			{datatype: "String", oname: "option_8", func: (str) => str.setDescription("Something that the Target could be.")},
+			{datatype: "String", oname: "option_9", func: (str) => str.setDescription("Something that the Target could be.")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		UTILS.msg(source, UTILS.isOneOf(...args) ? "True" : "False");
+	});
 
 	let choices = ["=", "!=", "<", "<=", ">", ">="];
 	let andor = ["and", "or"];
@@ -540,6 +664,7 @@ module.exports = (g) =>
 						{
 							cmd.arr = UTILS.split(subprocess(source, cmd.arrStr), '\n');
 							loc[cmd.elem] = cmd.arr[init-1];
+							cmd.conds[0].b = cmd.arr.length;
 						}
 
 						if(cmd.incStr)
@@ -550,7 +675,7 @@ module.exports = (g) =>
 								throw "For loop's variable increment is not a number!";
 
 							cmd.inc = parseFloat(cmd.inc);
-							cmd.conds[0] = cmd.inc > 0 ? "<=" : ">=";
+							cmd.conds[0].o = cmd.inc > 0 ? "<=" : ">=";
 						}
 					}
 
@@ -745,7 +870,11 @@ module.exports = (g) =>
 			delete SCRIPTDATA[interaction.member.id];
 
 			set_script(interaction, title, userexec, script);
-		}).catch(console.error);
+		}).catch((e) =>
+		{
+			console.error(e);
+			UTILS.msg(interaction, "-ERROR: " + e);
+		});
 
 		return true;
 	});
@@ -808,7 +937,7 @@ module.exports = (g) =>
 		if(subSource.print.diff)
 			subSource.print.txt += "\n```";
 
-		UTILS.msg(source, subSource.print.txt.length === 0 ? "+Complete." : subSource.print.txt, true);
+		UTILS.msg(source, subSource.print.txt.length === 0 ? "```diff\n+Complete.\n```" : subSource.print.txt, true);
 	});
 
 	register_scmd(["view_script", "viewscript", "vs"], "<script>", "View Script", "View the contents of a script.", {minArgs: 1, slashOpts:

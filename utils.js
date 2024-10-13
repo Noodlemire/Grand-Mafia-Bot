@@ -722,13 +722,14 @@ module.exports = (g) =>
 			return String(h);
 	}
 
-	UTILS.split = (str, d) =>
+	UTILS.split = (str, d, allowEmpty) =>
 	{
 		let splits = String(str || "").split(d);
 
-		for(let i = splits.length-1; i >= 0; i--)
-			if(splits[i].length === 0)
-				splits.splice(i, 1);
+		if(!allowEmpty)
+			for(let i = splits.length-1; i >= 0; i--)
+				if(splits[i].length === 0)
+					splits.splice(i, 1);
 
 		return splits;
 	}
