@@ -610,8 +610,6 @@ module.exports = (g) =>
 
 		toJSON()
 		{
-			//Don't know why I can't just return the raw definition directly,
-			//but okay. Have a free pointless variable, I guess.
 			let json = {
 				aliases: this.#aliases,
 				author: this.#author,

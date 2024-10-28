@@ -365,7 +365,7 @@ Single Line Field Name: Single Line Info Here
 
 					if(postNo !== "")
 					{
-						aliasLib[postNo] = true;
+						aliasLib[postNo.toLowerCase()] = true;
 
 						if(!UTILS.isInt(postNo))
 							aliasLib[String(parseInt(postNo, 10))] = true;
@@ -378,10 +378,33 @@ Single Line Field Name: Single Line Info Here
 						let info = UTILS.split(line, ":");
 						let key = info[0].trim().substring(0, 256).replace(/[\*_~\`]/g, "");
 						let akey = UTILS.toArgName(key);
-						let value = info[1];
+						let value;
+						let colonStored = false;
+						let keyCompleted = false;
 
-						for(let t = 2; t < info.length; t++)
-							value += ":" + info[t];
+						for(let t = 1; t < info.length; t++)
+						{
+							if(!keyCompleted)
+							{
+								if(info[t-1].substring(info[t-1].length-1, info[t-1].length) === '<')
+								{
+									colonStored = true;
+									key += ':' + info[t];
+								}
+								else if(colonStored)
+								{
+									colonStored = false;
+									key += ':' + info[t];
+								}
+								else
+								{
+									keyCompleted = true;
+									value = info[t];
+								}
+							}
+							else
+								value += ':' + info[t];
+						}
 
 						if(value)
 							value = UTILS.trimFormatting(value);

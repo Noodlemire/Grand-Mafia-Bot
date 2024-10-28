@@ -513,15 +513,15 @@ module.exports = (g) =>
 			}
 
 			if(!isNaN(spec) && ids[spec-1])
-				UTILS.msg(source, "Found this ID: " + ids[spec-1]);
+				UTILS.msg(source, "Found this ID: ID" + ids[spec-1]);
 			else if(ids.length === 1)
-				UTILS.msg(source, "Found this ID: " + ids[0]);
+				UTILS.msg(source, "Found this ID: ID" + ids[0]);
 			else
 			{
 				let txt = "There are multiple objects with the given alias. Here are their IDs:";
 
 				for(let i = 0; i < ids.length; i++)
-					txt += "\n" + alias + " " + i+1 + ": " + ids[i];
+					txt += "\n" + alias + " " + i+1 + ": ID" + ids[i];
 
 				UTILS.msg(source, txt);
 			}
@@ -948,6 +948,31 @@ module.exports = (g) =>
 		});
 	});
 
+	register_cmd(["list_ids", "listids", "lids", "lid"], "<structure> [param1] [param2] [param3] [param4] [param5] [author id]", "List IDs", "For scripting purposes.\n\nList all object IDs that belong to a given Structure, separated by lines for use with !foreach.\n\nThis is essentially a script-compatible version of the `/_list` series of server commands, following all the same filtering rules.", {minArgs: 1}, (chn, source, e, args) =>
+	{
+		UTILS.inherit(SERVER_DATA, source, (data) =>
+		{
+			let sdata = data.structs || {};
+			let sname = UTILS.toArgName(args[0], true);
+
+			if(!sdata[sname])
+				throw "-There is no Structure with the name: " + sname;
+
+			args.splice(0, 1);
+
+			let results = sdata[sname].list(chn, source, e, args, true);
+			let output = results[0];
+
+			for(let i = 1; i < results.length; i++)
+				output += '\n' + results[i];
+
+			if(results)
+				UTILS.msg(source, output);
+			else
+				throw "-No results for query: " + UTILS.display(args);
+		});
+	});
+
 	register_cmd("data", "<structure> <alias or ID> <key1> [key2] [key3] [keyN]...", "Read Object Data", "For scripting purposes.\n\nRead a specific piece of data from a given object.\n\nIf multiple keys are provided, it is assumed that you are reading from a table within a table within a table... for each added key.\n\nThrows an error if the result, itself, would be a table.\n\nFor example, to find the name of the first field of an Example-Structure object named 'Thing', you might use:\n\n" + PRE + "data example thing fields 0 name\n\nUse the " + PRE + "view_json command to know what keys are available for an object.", {minArgs: 3}, (chn, source, e, args) =>
 	{
 		UTILS.inherit(SERVER_DATA, source, (data) =>
@@ -981,14 +1006,17 @@ module.exports = (g) =>
 			{
 				let key = args[i];
 
-				if(!cur[key])
+				if(cur[key] === undefined)
 					throw "-Key not found: " + key;
 
 				cur = cur[key];
 			}
 
+			if(cur === null)
+				cur = "null";
+
 			if(UTILS.isOneOf(typeof cur, "boolean", "number", "string"))
-				UTILS.msg(source, cur);
+				UTILS.msg(source, String(cur));
 			else
 				throw "Cannot output value of type: " + typeof cur;
 		});

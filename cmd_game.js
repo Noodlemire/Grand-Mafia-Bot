@@ -257,6 +257,23 @@ module.exports = (g) =>
 		UTILS.embed(source, e);
 	});
 
+	register_scmd(["my_num", "mynum", "num"], "", "My Player Number", "Learn what your Player Number is, if you are registered.", (chn, source, e, args) =>
+	{
+		let user = UTILS.getPlayerByID(SERVER_DATA[source.guild.id].players, source.member.id);
+
+		if(!user)
+		{
+			if(source.deferred || source.reply || source.send)
+				UTILS.msg(source, "-ERROR: You are not a registered player!");
+			else
+				UTILS.msg(source, "None");
+
+			return;
+		}
+
+		UTILS.msg(source, user.num);
+	});
+
 	register_scmd(["toggle_day", "toggleday"], "", "Toggle Day", "Toggle between Night and Day. Whispering is only allowed in the Day.", {adminOnly: true}, (chn, source, e, args) =>
 	{
 		let data = SERVER_DATA[source.guild.id]
@@ -556,6 +573,57 @@ module.exports = (g) =>
 
 		UTILS.msg(source, output);
 		overwrite(source);
+	});
+
+	register_scmd(["has_tag", "hastag", "has"], "<Player Name or Number or *> <Key>", "Has Tag", "Check if a given player has a named tag at all.",
+	{
+		adminOnly: true, ephemeral: true, minArgs: 2, slashOpts:
+		[
+			{datatype: "String", oname: "player", func: (str) => str.setDescription("Name or Number of a player, or `*` to apply to all players.")},
+			{datatype: "String", oname: "tag", func: (str) => str.setDescription("Name of the tag that will be checked.")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		let pdata = SERVER_DATA[source.guild.id].players;
+		let players = (args[0] === "*" ? Object.keys(pdata) : [args[0]]);
+		let output = "";
+
+		if(UTILS.isInt(args[0]))
+			players[0] = parseInt(args[0])-1;
+
+		if(players.length === 0)
+		{
+			UTILS.msg(source, "-ERROR: Player data is empty.");
+			return;
+		}
+
+		let key = args[1].toLowerCase();
+
+		for(let i = 0; i < players.length; i++)
+		{
+			let player = UTILS.isInt(players[i])
+				? pdata[players[i]]
+				: UTILS.getPlayerByName(pdata, players[i]);
+
+			if(!player)
+			{
+				output += "-ERROR: Player \"" + (args[0] === "*" ? players[i] : args[0]) + "\" is not valid.";
+				continue;
+			}
+
+			if(source.deferred || source.reply || source.send)
+			{
+				output += "Player " + player.num + " does " + (player.tags[key] === undefined ? "not " : "") + "have Tag \"" + key + "\"";
+			}
+			else
+				output += (player.tags[key] === undefined ? "False" : "True");
+
+			if(i < players.length-1)
+				output += '\n';
+		}
+
+		UTILS.msg(source, output);
 	});
 
 	register_scmd(["tag_default", "tagdefault", "default"], "<Key> [Value]", "Tag Default", "Set a default tag value. This will be applied to future added players, but not to ones that already exist.\n\nTo check what a Tag's default currently is, use this command without providing a Value.\n\nTo check all Default Tags, use the =tag_defaults command.\n\nTo remove a Tag, use this command with the Value set to \"-\" (without the quotes).\n\nTo list usable tags, use the =tags command.",

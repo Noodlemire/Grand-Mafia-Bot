@@ -93,7 +93,7 @@ module.exports = (g) =>
 			let list_gcmd = {
 				title: title + " List",
 				desc: "Create a filterable list of Objects belonging to the '" + title + "' Structure.",
-				meta: {slashOpts: [{datatype: "String", oname: "author_id", func: (str) => str.setDescription("Filter by User ID. You may choose multiple; use `:` to separate them.").setMaxLength(2000)}]},
+				meta: {slashOpts: [{datatype: "String", oname: "author_id", func: (str) => str.setDescription("Filter by User ID. You may choose multiple; use `|` to separate them.").setMaxLength(2000)}]},
 				func: this.list,
 				struct: name.name || name,
 				
@@ -102,7 +102,7 @@ module.exports = (g) =>
 			let roll_gcmd = {
 				title: "Random " + title,
 				desc: "Randomly generate a new " + title + ", adhering to any given filters.",
-				meta: {slashOpts: [{datatype: "String", oname: "author_id", func: (str) => str.setDescription("Filter by User ID. You may choose multiple; use `:` to separate them.").setMaxLength(2000)}]},
+				meta: {slashOpts: [{datatype: "String", oname: "author_id", func: (str) => str.setDescription("Filter by User ID. You may choose multiple; use `|` to separate them.").setMaxLength(2000)}]},
 				func: (chn, source, e, args) => 
 				{
 					let result = this.roll(chn, source, e, args);
@@ -128,9 +128,9 @@ module.exports = (g) =>
 
 				supply_gcmd_args(reg_gcmd, 2, "<Space-Separated Alias List> <Human-Readable Title>", "[Color Hex Code|Random] [Icon URL] [Image URL]", true, name.parent, name.param1, name.param2, name.param3, name.param4, "Name of a " + name.parent + ". This will inherit its Color and Icon URL unless set manually.", "Inline Field.");
 
-				supply_gcmd_args(list_gcmd, 0, undefined, "[Author ID]", false, name.parent, name.param1, name.param2, name.param3, name.param4, "Filter by " + name.parent + ". You may choose multiple; use `:` to separate them.", "Filter by special value. You may choose multiple; use `:` to separate them.");
+				supply_gcmd_args(list_gcmd, 0, undefined, "[Author ID]", false, name.parent, name.param1, name.param2, name.param3, name.param4, "Filter by " + name.parent + ". You may choose multiple; use `|` to separate them.", "Filter by special value. You may choose multiple; use `|` to separate them.");
 
-				supply_gcmd_args(roll_gcmd, 0, undefined, "[Author ID]", false, name.parent, name.param1, name.param2, name.param3, name.param4, "Filter by " + name.parent + ". You may choose multiple; use `:` to separate them.", "Filter by special value. You may choose multiple; use `:` to separate them.");
+				supply_gcmd_args(roll_gcmd, 0, undefined, "[Author ID]", false, name.parent, name.param1, name.param2, name.param3, name.param4, "Filter by " + name.parent + ". You may choose multiple; use `|` to separate them.", "Filter by special value. You may choose multiple; use `|` to separate them.");
 
 				add_gcmd(serverid, "register_" + name.name, reg_gcmd);
 				add_gcmd(serverid, name.name + "_list", list_gcmd);
@@ -310,9 +310,9 @@ module.exports = (g) =>
 
 				supply_gcmd_args(reg_gcmd, 2, "<Space-Separated Alias List> <Human-Readable Title>", "[Color Hex Code|Random] [Icon URL] [Image URL]", true, parent, param1, param2, param3, param4, "Name of a " + parent + ". This will inherit its Color and Icon URL unless set manually.", "Inline Field.");
 
-				supply_gcmd_args(list_gcmd, 0, undefined, undefined, false, parent, param1, param2, param3, param4, "Filter by " + parent + ". You may choose multiple; use `:` to separate them.", "Filter by special value. You may choose multiple; use `:` to separate them.");
+				supply_gcmd_args(list_gcmd, 0, undefined, undefined, false, parent, param1, param2, param3, param4, "Filter by " + parent + ". You may choose multiple; use `|` to separate them.", "Filter by special value. You may choose multiple; use `|` to separate them.");
 
-				supply_gcmd_args(roll_gcmd, 0, undefined, undefined, false, parent, param1, param2, param3, param4, "Filter by " + parent + ". You may choose multiple; use `:` to separate them.", "Filter by special value. You may choose multiple; use `:` to separate them.");
+				supply_gcmd_args(roll_gcmd, 0, undefined, undefined, false, parent, param1, param2, param3, param4, "Filter by " + parent + ". You may choose multiple; use `|` to separate them.", "Filter by special value. You may choose multiple; use `|` to separate them.");
 
 				add_gcmd(serverid, "register_" + name, reg_gcmd, true);
 				add_gcmd(serverid, name + "_list", list_gcmd, true);
@@ -541,7 +541,7 @@ module.exports = (g) =>
 
 				if(aliases[i].length === 0)
 				{
-					UTILS.msg(source, "-Error: One of the aliases is invalid. Must be alphanumeric and contain no special characters other than `-` and `_`");
+					UTILS.msg(source, "-Error: Cannot submit an empty alias.");
 					return;
 				}
 
@@ -614,22 +614,25 @@ module.exports = (g) =>
 			});
 		}
 
-		//Due to technical wizardry, 'this' refers to the Command object that stores this function.
-		list(chn, source, e, args)
+		//Due to technical wizardry, 'this' may refer to the Command object that stores this function.
+		list(chn, source, e, args, onlyIDs)
 		{
-			UTILS.inherit(SERVER_DATA, source, (data) =>
+			return UTILS.inherit(SERVER_DATA, source, (data) =>
 			{
-				let struct = data.structs[this.struct];
+				let struct = this;
 				let filters = [];
 				let sorted = {};
 				let current = sorted;
+				let ids = [];
+
+				if(struct.struct) struct = data.structs[struct.struct];
 
 				for(let i = 0; i < args.length; i++)
 				{
-					filters[i] = UTILS.split(args[i], ":");
+					filters[i] = UTILS.split(args[i], "|");
 
 					for(let n = 0; n < filters[i].length; n++)
-						filters[i][n] = UTILS.toArgName(filters[i][n], true);
+						filters[i][n] = UTILS.toArgName(filters[i][n]);
 				}
 
 				for(let id = 0; id < struct.getMaxID(); id++)
@@ -643,7 +646,8 @@ module.exports = (g) =>
 						let paramlist = staticParamlist.concat(info.getAuthor());
 						let allowed = true;
 
-						current = sorted;
+						if(!onlyIDs)
+							current = sorted;
 
 						let paramNames = info.getParamNames().concat("Author");
 						let newParams = UTILS.libSplit(info.getMeta("spawn_as", "").toLowerCase(), ";", ":");
@@ -665,9 +669,9 @@ module.exports = (g) =>
 								exclist[i] = [];
 
 							for(let n = 0; n < paramlist[i].length; n++)
-								paramlist[i][n] = UTILS.toArgName(paramlist[i][n], true);
+								paramlist[i][n] = UTILS.toArgName(paramlist[i][n]);
 							for(let n = 0; n < exclist[i].length; n++)
-								exclist[i][n] = UTILS.toArgName(exclist[i][n], true);
+								exclist[i][n] = UTILS.toArgName(exclist[i][n]);
 						}
 
 						for(let i = 0; i < filters.length; i++)
@@ -681,7 +685,10 @@ module.exports = (g) =>
 
 								if(!UTILS.matchOne(exclist[i], filters[i]) && (UTILS.matchOne(paramlist[i], filters[i])
 										|| UTILS.containsString(spawn_any, paramNames[i])))
-									current = current[level] || (current[level] = {});
+								{
+									if(!onlyIDs)
+										current = current[level] || (current[level] = {});
+								}
 								else
 								{
 									allowed = false;
@@ -703,8 +710,8 @@ module.exports = (g) =>
 									for(let param in spawn_if_parent)
 									{
 										if(pinfo.getParam(param) && UTILS.containsString (
-												UTILS.toArgName(UTILS.split(spawn_if_parent[param], ','), true),
-												UTILS.toArgName(pinfo.getParam(param), true)))
+												UTILS.toArgName(UTILS.split(spawn_if_parent[param], ',')),
+												UTILS.toArgName(pinfo.getParam(param))))
 										{
 											allowed = true;
 											break;
@@ -719,19 +726,27 @@ module.exports = (g) =>
 
 						if(allowed)
 						{
-							let aliases = infoLocked.getAliases();
-							let line = "";
+							if(onlyIDs)
+								ids.push("ID" + id);
+							else
+							{
+								let aliases = infoLocked.getAliases();
+								let line = "";
 
-							for(let a = 0; a < aliases.length; a++)
-								line += " " + struct.getPre() + aliases[a];
+								for(let a = 0; a < aliases.length; a++)
+									line += " " + struct.getPre() + aliases[a];
 
-							current.list = current.list || [];
-							current.list[current.list.length] = line;
+								current.list = current.list || [];
+								current.list[current.list.length] = line;
+							}
 						}
 					}
 				}
 
-				UTILS.msg(source, struct.getTitle() + " List:\n" + listDisp(sorted));
+				if(onlyIDs)
+					return ids;
+				else
+					UTILS.msg(source, struct.getTitle() + " List:\n" + listDisp(sorted));
 			});
 		}
 
@@ -750,11 +765,11 @@ module.exports = (g) =>
 				{
 					if(args[i])
 					{
-						filters[i] = UTILS.split(args[i], ":");
+						filters[i] = UTILS.split(args[i], "|");
 
 						for(let n = 0; n < filters[i].length; n++)
 							if(filters[i][n] !== '*')
-								filters[i][n] = UTILS.toArgName(filters[i][n], true);
+								filters[i][n] = UTILS.toArgName(filters[i][n]);
 					}
 				}
 
@@ -792,14 +807,14 @@ module.exports = (g) =>
 									exclist[i] = [];
 
 								for(let n = 0; n < paramlist[i].length; n++)
-									paramlist[i][n] = UTILS.toArgName(paramlist[i][n], true);
+									paramlist[i][n] = UTILS.toArgName(paramlist[i][n]);
 								for(let n = 0; n < exclist[i].length; n++)
-									exclist[i][n] = UTILS.toArgName(exclist[i][n], true);
+									exclist[i][n] = UTILS.toArgName(exclist[i][n]);
 							}
 
 							for(let i = 0; i < filters.length; i++)
 							{
-								if(filters[i][0] === '*') continue;
+								if(filters[i] === undefined || filters[i][0] === '*') continue;
 
 								if(filters[i].length > 0
 										&& ((!UTILS.matchOne(paramlist[i], filters[i])
@@ -824,8 +839,8 @@ module.exports = (g) =>
 										for(let param in spawn_if_parent)
 										{
 											if(pinfo.getParam(param) && UTILS.containsString (
-													UTILS.toArgName(UTILS.split(spawn_if_parent[param], ','), true),
-													UTILS.toArgName(pinfo.getParam(param), true)))
+													UTILS.toArgName(UTILS.split(spawn_if_parent[param], ',')),
+													UTILS.toArgName(pinfo.getParam(param))))
 											{
 												allowed = true;
 												break;

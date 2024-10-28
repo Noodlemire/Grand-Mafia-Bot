@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!var die {!r 10}","!if {die} = 8","!say 🎲 | You roll an **{die}**!","!else","!say 🎲 | You roll a **{die}**!","!end"]}

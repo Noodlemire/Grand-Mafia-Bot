@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!exists 1} = True","!say Emoji: {1}","!say Aliases: {1}","!end","!if {!exists 2} = True","!say Sell Value: {2}","!end","!if {!exists 3} = True","!say Use Type: {3}","!end","!if {!exists 4} = True","!say Equip Type: {4}","!end"]}

@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!var me {!num}","!if {me} = None","!throw You are not a registered player! Please use `!e new_game` first.","!end","!foreach _ id {!lid item}","!if {!tag {me} inv_{id}} > 0","!say {!data item {id} params emoji} {!data item {id} title}: {!tag {me} inv_{id}}","!end","!end"]}

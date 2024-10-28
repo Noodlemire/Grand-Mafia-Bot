@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!foreach _ id {!lid card}","!var auth {!data card {id} author}","!var name author{auth}","!if {!exists {name}} = True","!var {name} {!add {{name}} 1}","!else","!var {name} 1","!if {!exists all} = True","!var all {all}\n{auth}","!else","!var all {auth}","!end","!end","!end","!foreach _ a {all}","!say <@{a}>: {author{a}}","!end"]}
