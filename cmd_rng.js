@@ -24,7 +24,7 @@ module.exports = (g) =>
 		i = i + 1;
 	}
 
-	register_scmd(["random_number", "randomnumber", "rnum", "r"], "<number> | <min> <max>", "Random", "Generate a random number between [1, <number] or between [<min>, <max>].", {minArgs: 1, slashOpts:
+	register_scmd(["random_number", "randomnumber", "rnum", "r"], "<number> | <min> <max>", "Random", "Generate a random number between [1, <number>] or between [<min>, <max>].", {minArgs: 1, slashOpts:
 		[
 			{datatype: "Integer", oname: "min", func: (str) => str.setDescription("Minimum possible number, if max is included. If max is excluded, this is the max instead.")},
 			{datatype: "Integer", oname: "max", func: (str) => str.setDescription("Maximum possible number")},
@@ -32,13 +32,13 @@ module.exports = (g) =>
 	},
 	(chn, source, e, args) =>
 	{
-		if(!UTILS.isInt(args[0]) || (args[1] && !UTILS.isInt(args[1])))
+		if(!UTILS.isInt(args[0]) || !UTILS.isInt(args[1], true))
 			throw "This function cannot accept non-integer values.";
 
 		let min = Number(args[0]);
 		let max = Number(args[1]);
 
-		if(!args[1])
+		if(args[1] === undefined)
 		{
 			max = min;
 			min = 1;

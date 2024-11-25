@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!e max_attack {1}} > {!e min_attack {1}}","!tag {1} max_attack_mod {!sub {!tag {1} max_attack_mod} 1}","!say Your maximum damage has decreased by **1**!","!end"]}

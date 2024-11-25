@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {2} > 0 and {!tag {1} monster_hp} < {!tag {1} monster_max_hp}","!tag {1} monster_hp {!add {!tag {1} monster_hp} 1}","!say _ _\nThe 🦇 Vampire Bat heals **1** HP!\nIt has **{!tag {1} monster_hp}/{!tag {1} monster_max_hp}** HP remaining.","!end"]}

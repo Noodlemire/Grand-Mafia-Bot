@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!tag {1} max_hp {!add {!tag {1} max_hp} {2}}","!tag {1} hp {!add {!tag {1} hp} {2}}","!say Your Max HP increased by **{2}**! ({!tag {1} hp}/{!tag {1} max_hp})"]}

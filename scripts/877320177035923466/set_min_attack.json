@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!tag {1} monster_min_attack} = {2}","!throw The enemy's minimum damage is already {2}!","!end","!tag {1} monster_min_attack {2}","!say The enemy's minimum damage has been set to **{2}**!"]}

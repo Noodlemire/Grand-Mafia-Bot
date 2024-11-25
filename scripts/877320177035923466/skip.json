@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!is {1} skip_enemy} = False","!tag {1} skip_enemy {2}","!else","!tag {1} skip_enemy {!add {!tag {1} skip_enemy} {2}}","!end","!if {!tag {1} skip_enemy} > 1","!say The enemy's next **{!tag {1} skip_enemy}** turns (total) will be skipped.","!else","!say The enemy's next turn will be skipped.","!end"]}

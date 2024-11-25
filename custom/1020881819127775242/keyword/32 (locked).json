@@ -1,0 +1,1 @@
+{"aliases":["minus_x","minusx","minus"],"author":"298205270201597955","title":"Minus X","params":{},"fields":[],"meta":{},"desc":"Card status, all numbers in the card text (3, three) are decreased by X, capped at -3.","id":32,"locked":true}

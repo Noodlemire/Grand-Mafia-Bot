@@ -575,7 +575,7 @@ module.exports = (g) =>
 		overwrite(source);
 	});
 
-	register_scmd(["has_tag", "hastag", "has"], "<Player Name or Number or *> <Key>", "Has Tag", "Check if a given player has a named tag at all.",
+	register_scmd(["is_tagged", "istagged", "is", "tagged"], "<Player Name or Number or *> <Key>", "Is Tagged", "Check if a given player has a named tag applied to them.",
 	{
 		adminOnly: true, ephemeral: true, minArgs: 2, slashOpts:
 		[

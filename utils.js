@@ -536,7 +536,7 @@ module.exports = (g) =>
 
 	UTILS.msg = (src, txt, nodiff, line, menu) =>
 	{
-		txt = (txt || "").toString();
+		txt = String(txt);
 
 		if(!src.deferred && !src.reply && !src.send)
 		{
@@ -672,13 +672,13 @@ module.exports = (g) =>
 	//[<min>, <max>] or [0, <max>) or [0, 2)
 	UTILS.randInt = (min, max) =>
 	{
-		if(!min)
+		if(min === undefined)
 		{
 			min = 1;
-			max = max || 2;
+			max = max === undefined ? max : 2;
 		}
 
-		if(!max)
+		if(max === undefined)
 		{
 			max = min - 1;
 			min = 0;

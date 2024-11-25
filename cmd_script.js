@@ -95,7 +95,7 @@ module.exports = (g) =>
 			else
 				UTILS.msg(source, value);
 		}
-		else if(loc[key])
+		else if(loc[key] !== undefined)
 			UTILS.msg(source, loc[key]);
 		else if(source.deferred || source.reply || source.send)
 			UTILS.msg(source, "Local \"" + key + "\" does not exist.");
@@ -139,7 +139,7 @@ module.exports = (g) =>
 
 			overwrite(source);
 		}
-		else if(globals[key])
+		else if(globals[key] !== undefined)
 			UTILS.msg(source, globals[key]);
 		else if(source.deferred || source.reply || source.send)
 			UTILS.msg(source, "Global \"" + key + "\" does not exist.");
@@ -204,7 +204,7 @@ module.exports = (g) =>
 
 			for(let i = 0; i < args.length; i++)
 			{
-				if(!args[i]) continue;
+				if(args[i] === undefined) continue;
 
 				if(!UTILS.isNum(args[i]))
 					throw "-Value '" + args[i] + "' is not a number!";
@@ -343,6 +343,64 @@ module.exports = (g) =>
 			text += ' ' + args[i];
 
 		UTILS.msg(source, text.toUpperCase());
+	});
+
+	register_scmd(["is_int", "isint"], "<String>", "Is Integer", "Check if a string of characters counts as a whole number or not.",
+	{
+		minArgs: 1, slashOpts:
+		[
+			{datatype: "String", oname: "string", func: (str) => str.setDescription("Arbitrary string of characters")}
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		UTILS.msg(source, UTILS.titleCase(UTILS.isInt(args[0])));
+	});
+
+	register_scmd(["is_num", "isnum"], "<String>", "Is Number", "Check if a string of characters counts as a number or not.",
+	{
+		minArgs: 1, slashOpts:
+		[
+			{datatype: "String", oname: "string", func: (str) => str.setDescription("Arbitrary string of characters")}
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		UTILS.msg(source, UTILS.titleCase(UTILS.isNum(args[0])));
+	});
+
+	register_scmd(["round"], "<Number> [Up|Down]", "Round", "Round decimal number to a whole number.",
+	{
+		minArgs: 1, slashOpts:
+		[
+			{datatype: "Number", oname: "number", func: (str) => str.setDescription("Decimal number that should be rounded.")},
+			{datatype: "String", oname: "mode", func: (str) => str.setDescription("Round up, down, or to the closest number? (Default: Closest)").setChoices({name: "Up", value: "up"}, {name: "Down", value: "down"}, {name: "Closest", value: "closest"})},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		if(!UTILS.isNum(args[0])) throw "'" + args[0] + "' is not a valid number!";
+
+		let num = parseFloat(args[0]);
+		let mode = (args[1] || "closest").toLowerCase();
+
+		switch(mode)
+		{
+			case "up":
+				UTILS.msg(source, Math.ceil(num));
+				break;
+
+			case "down":
+				UTILS.msg(source, Math.floor(num));
+				break;
+
+			case "closest":
+				UTILS.msg(source, Math.round(num));
+				break;
+
+			default:
+				throw "'" + args[1] + "' is not a valid rounding mode!";
+		}
 	});
 
 	register_scmd(["is_one_of", "isoneof", "ioo"], "<Target> <Option 1> [Option 2] [Option N...]", "Is One Of", "Check if a target phrase is included in a list of options. Returns 'True' or 'False'.",
@@ -925,19 +983,38 @@ module.exports = (g) =>
 			channel: source.channel,
 			locals: scriptLocals,
 			print: {txt: "", diff: false},
-			elevated: script.userexec
+			elevated: source.elevated || script.userexec
 		};
 
 		for(let i = 0; i < script.lines.length; i++)
 		{
 			subSource.content = script.lines[i];
-			process(subSource);
+
+			if(source.deferred || source.reply || source.send)
+			{
+				try
+				{
+					process(subSource);
+				}
+				catch(err)
+				{
+					if(!subSource.print.diff)
+						subSource.print.txt += "\n```diff";
+
+					subSource.print.txt += "\n-ERROR: " + err + "\n```";
+					break;
+				}
+			}
+			else
+				process(subSource);
 		}
 
 		if(subSource.print.diff)
 			subSource.print.txt += "\n```";
 
-		UTILS.msg(source, subSource.print.txt.length === 0 ? "```diff\n+Complete.\n```" : subSource.print.txt, true);
+		let defaultOutput = source.deferred || source.reply || source.send ? "```diff\n+Complete.\n```" : "Nothing";
+
+		UTILS.msg(source, subSource.print.txt.length === 0 ? defaultOutput : subSource.print.txt, true);
 	});
 
 	register_scmd(["view_script", "viewscript", "vs"], "<script>", "View Script", "View the contents of a script.", {minArgs: 1, slashOpts:
@@ -979,5 +1056,26 @@ module.exports = (g) =>
 		}
 
 		UTILS.msg(source, "```" + output + "```", true);
+	});
+
+	register_scmd(["list_scripts", "listscripts", "scripts", "ls"], "", "List Scripts", "List all scripts. Green ones are user-executable, red ones are admin-only.", (chn, source, e, args) =>
+	{
+		let serverid = source.guild.id;
+		let data = SERVER_DATA[serverid];
+
+		if(data.inherit) throw "For now, scripts are unavailable while inheritance is enabled.";
+
+		let dir = path.join(SCRIPTDIR, serverid);
+		if(!fs.existsSync(dir)) throw "There are no scripts to list.";
+		let filenames = fs.readdirSync(dir);
+		let output = "List of Scripts:"
+
+		for(let i in filenames)
+		{
+			let data = JSON.parse(fs.readFileSync(path.join(dir, filenames[i]), "utf8"));
+			output += "\n" + (data.userexec ? "+" : "-") + " " + filenames[i].substring(0, filenames[i].length-5);
+		}
+
+		UTILS.msg(source, output);
 	});
 };

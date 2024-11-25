@@ -554,7 +554,7 @@ Single Line Field Name: Single Line Info Here
 		if(field)
 		{
 			field.name += HELP[cont] + ":";
-		    fields[fields.length] = field;
+			fields[fields.length] = field;
 		}
 
 		let deferr = "<@" + message.author + ">";
@@ -564,7 +564,7 @@ Single Line Field Name: Single Line Info Here
 		{
 			desc = "Post " + postNo + (desc.length > 0 ? "\n" + desc.substring(0, desc.length-1) : "");
 
-			if(parseInt(postNo, 10) <= 0 && !meta.cannot_spawn)
+			if((parseInt(postNo, 10) <= 0 || String(parseInt(postNo, 10)) !== postNo) && !meta.cannot_spawn)
 				meta.cannot_spawn = "true";
 
 			if(!meta.post) meta.post = postNo;
@@ -617,6 +617,9 @@ Single Line Field Name: Single Line Info Here
 			desc = null;
 
 		delete aliasLib[""];
+
+		if(!meta["track_message_id"])
+			meta["track_message_id"] = message.id;
 
 		let obj = new StructObj(message.guild.id, auto.struct, Object.keys(aliasLib), auth, title, color, iconURL, imageURL, paramLib, fields, meta, desc);
 		let outputText = "+Successfully " + (locked ? "queued" : "created") + " " + obj.getStructType() + " \"" + obj.getTitle() + "\" with ID" + (postNo === "" ? "" : " (Not Necessarily Post Number)") + ": ID" + obj.getID() + "\n\nRegistered commands:";

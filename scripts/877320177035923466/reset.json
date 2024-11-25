@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!tag {1} battle false","!tag {1} max_hp_mod 0","!tag {1} min_attack_mod 0","!tag {1} max_attack_mod 0","!tag {1} monster -","!tag {1} monster_max_hp -","!tag {1} monster_hp -","!tag {1} monster_min_attack -","!tag {1} monster_max_attack -","!tag {1} skip_enemy -"]}

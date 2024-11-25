@@ -356,12 +356,6 @@ function subprocess(source, arg, limit, runInBodyMode)
 
 			if(subcmd.substring(0, PRE.length) === PRE)
 			{
-				//let subargs = UTILS.split(subcmd, ' ');
-				//UTILS.arrayByBraces(subargs);
-
-				//for(let i = 0; i < subargs.length; i++)
-				//	if(i > 0 || 
-
 				arg = arg.substring(0, op) + String(process({
 					content: subcmd,
 					member: auth,

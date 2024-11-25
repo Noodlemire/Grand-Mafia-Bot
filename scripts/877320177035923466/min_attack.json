@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!var min {!add {!tag {1} min_attack} {!tag {1} min_attack_mod}}","!say {min}"]}

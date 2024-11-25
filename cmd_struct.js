@@ -627,6 +627,46 @@ module.exports = (g) =>
 		});
 	});
 
+	register_scmd(["has_meta", "hasmeta", "has"], "<structure> <alias or ID> <Meta Key> [Locked Version]", "Object Has Meta", "Check if a provided Object has a given Meta value specified in its definition.", {minArgs: 3, slashOpts:
+		[
+			{datatype: "String", oname: "structure", func: (str) => str.setDescription("When checking an Object's Meta, you must specify the Structure that it belongs to.")},
+			{datatype: "String", oname: "identifier", func: (str) => str.setDescription("Alias or ID. May also provide a space-separated specifier, i.e. `thing 4`")},
+			{datatype: "String", oname: "meta_key", func: (str) => str.setDescription("Name of the Meta value to check")},
+			{datatype: "Boolean", oname: "locked_version", func: (str) => str.setDescription("In Edit Lock mode, check for an updated version if it exists. Default: False")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		UTILS.inherit(SERVER_DATA, source, (data) =>
+		{
+			let sdata = data.structs || {};
+			let sname = UTILS.toArgName(args[0], true);
+
+			if(!sdata[sname])
+				throw "There is no Structure with the name: " + sname;
+
+			let arg = args[1];
+
+			if(UTILS.isInt(args[2]))
+			{
+				arg += " " + args[2];
+				args.splice(2, 1);
+			}
+
+			if(args.length === 2)
+				throw "You must provide the name of a meta key to search for!";
+
+			let key = UTILS.toArgName(args[2], true);
+			let lockVer = UTILS.bool(args[3], false);
+			let obj = sdata[sname].search(arg, lockVer);
+
+			if(!obj)
+				throw "There is no " + args[0] + " that could be identified using '" + arg + "'. It might have a different alias/ID, or there may be other objects with the same alias.";
+
+			UTILS.msg(source, UTILS.titleCase(obj.hasMeta(key)));
+		});
+	});
+
 	register_scmd(["object_meta", "objectmeta", "objmeta", "ometa", "om"], "[structure] [alias or ID] [Locked Version]", "Check Object Meta", "Check an Object's Metadata, or list all possible Meta fields.", {slashOpts:
 		[
 			{datatype: "String", oname: "structure", func: (str) => str.setDescription("When checking an Object's Meta, you must specify the Structure that it belongs to.")},
@@ -665,30 +705,26 @@ module.exports = (g) =>
 				let sname = UTILS.toArgName(args[0], true);
 
 				if(!sdata[sname])
-				{
-					UTILS.msg(source, "-There is no Structure with the name: " + sname);
-					return;
-				}
+					throw "There is no Structure with the name: " + sname;
 
 				let arg = args[1];
-				if(UTILS.isInt(args[2])) arg += " " + args[2];
-				let lockVer = args[3] !== undefined ? UTILS.bool(args[3], false) : UTILS.bool(args[2], false);
+				if(UTILS.isInt(args[2]))
+				{
+					arg += " " + args[2];
+					args.splice(2, 1);
+				}
+
+				let lockVer = UTILS.bool(args[2], false);
 				let obj = sdata[sname].search(arg, lockVer);
 
 				if(!obj)
-				{
-					UTILS.msg(source, "-There is no " + args[0] + " that could be identified using '" + arg + "'. It might have a different alias/ID, or there may be other objects with the same alias.");
-					return;
-				}
+					throw "There is no " + args[0] + " that could be identified using '" + arg + "'. It might have a different alias/ID, or there may be other objects with the same alias.";
 
 				let meta = obj.getMeta();
 				let keys = Object.keys(meta);
 
 				if(keys.length === 0)
-				{
-					UTILS.msg(source, "Object '" + obj.getTitle(true) + "' has no meta.");
-					return;
-				}
+					throw "Object '" + obj.getTitle(true) + "' has no meta.";
 
 				let output = "Meta for command '" + obj.getTitle(true) + "':\n{";
 
@@ -833,8 +869,13 @@ module.exports = (g) =>
 				throw "-There is no Structure with the name: " + sname;
 
 			let arg = args[1];
-			if(UTILS.isInt(args[2])) arg += " " + args[2];
-			let lockVer = args[3] !== undefined ? UTILS.bool(args[3], false) : UTILS.bool(args[2], false);
+			if(UTILS.isInt(args[2]))
+			{
+				arg += " " + args[2];
+				args.splice(2, 1);
+			}
+
+			let lockVer = UTILS.bool(args[2], false);
 			let json = sdata[sname].search(arg, lockVer, true);
 
 			if(!json)
@@ -984,25 +1025,23 @@ module.exports = (g) =>
 				throw "-There is no Structure with the name: " + sname;
 
 			let arg = args[1];
-			if(UTILS.isInt(args[2])) arg += " " + args[2];
+			if(UTILS.isInt(args[2]))
+			{
+				arg += " " + args[2];
+				args.splice(2, 1);
+			}
+
 			let json = sdata[sname].search(arg, false, true);
 
 			if(!json)
 				throw "-There is no " + args[0] + " that could be identified using '" + arg + "'. It might have a different alias/ID, or there may be other objects with the same alias.";
 
-			let start = 2;
-
-			if(UTILS.isInt(args[2]))
-			{
-				if(args.length === 3)
-					throw "-You must provide at least one Key to search for!";
-
-				start = 3;
-			}
+			if(args.length === 2)
+				throw "-You must provide at least one Key to search for!";
 
 			let cur = json;
 
-			for(let i = start; i < args.length; i++)
+			for(let i = 2; i < args.length; i++)
 			{
 				let key = args[i];
 
