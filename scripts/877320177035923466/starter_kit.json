@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!var me {!my_num}","!foreach _ id ID20\nID21\nID22\nID23\nID15","!tag {me} inv_{id} 1","!say {!e equip {id}}","!end","!if {!exists 1} = True","!say {!tag {me} depth {1}}","!end"]}

@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!tag {1} used_boomerang y","!say {!e direct_damage {1} {2}}"]}

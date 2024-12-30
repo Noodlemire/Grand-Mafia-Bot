@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!var me {!num}","!if {me} = None","!throw You cannot quit a game you have not joined yet. You may use `!e new_game` to begin.","!end","!say **You quit!**\n{!e final_results {me}}","!overwrite"]}

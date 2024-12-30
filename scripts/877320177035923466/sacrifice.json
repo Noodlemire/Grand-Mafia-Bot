@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!tag {1} hp} <= 10","!throw You cannot use this item without dying.","!end","!tag {1} hp {!sub {!tag {1} hp} 10}","!tag {1} max_hp {!sub {!tag {1} max_hp} 10}","!tag {1} defense {!add {!tag {1} defense} 40}","!say You lose **10** Max HP ({!tag {1} hp}/{!tag {1} max_hp}) and gain **40** Defense ({!tag {1} defense})!"]}

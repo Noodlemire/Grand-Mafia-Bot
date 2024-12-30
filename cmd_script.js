@@ -821,10 +821,11 @@ module.exports = (g) =>
 		if(lines.length === 0) throw "Empty script!";
 		if(lines[0].trim().substring(0, PRE.length) !== PRE) throw "Invalid command: " + lines[0];
 
-		for(let i = lines.length-1; i >= 1; i--)
-		{
+		for(let i = 0; i < lines.length; i++)
 			lines[i] = lines[i].trim();
 
+		for(let i = lines.length-1; i >= 1; i--)
+		{
 			if(lines[i].substring(0, PRE.length) !== PRE)
 			{
 				lines[i-1] += "\n" + lines[i];
@@ -840,9 +841,9 @@ module.exports = (g) =>
 
 			UTILS.arrayByBraces(args);
 
-			if(!commands[cmd]) throw "Unknown command: " + PRE + cmd;
+			if(!commands[cmd]) throw "Line " + (i+1) + ": Unknown command: " + PRE + cmd;
 			if(commands[cmd].meta.minArgs && args.length < commands[cmd].meta.minArgs)
-				throw "USAGE: " + PRE + cmd + " " + commands[cmd].param;
+				throw "Line " + (i+1) + ": USAGE: " + PRE + cmd + " " + commands[cmd].param;
 		}
 
 		let file = path.join(SCRIPTDIR, serverid, title + ".json");
@@ -970,7 +971,7 @@ module.exports = (g) =>
 
 		let script = JSON.parse(fs.readFileSync(file, "utf8"));
 
-		if(!script.userexec && !source.member.permissions.has(ELEVATED)) throw "You do not have permission to execute this script!";
+		if(!source.elevated && !script.userexec && !source.member.permissions.has(ELEVATED)) throw "You do not have permission to execute this script!";
 
 		for(let i = 1; i < args.length; i++)
 			scriptLocals[String(i)] = args[i];

@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!var aliases {!data {1} {2} aliases 0}","!for i 1 {!sub {!data {1} {2} aliases length} 1}","!var aliases {aliases} {!data {1} {2} aliases {i}}","!end","!say {aliases}"]}

@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!var me {1}","!var plr_dmg {2}","!var nmy_rem {!sub {!tag {me} monster_hp} {plr_dmg}}","!tag {me} monster_hp {nmy_rem}","!say You deal **{plr_dmg}** damage!\nIt has **{nmy_rem}/{!tag {me} monster_max_hp}** HP remaining."]}

@@ -230,6 +230,9 @@ Single Line Field Name: Single Line Info Here
 		let paramNames = struct.getParams();
 		let paramKeys = {};
 
+		let deferr = "<@" + message.author + ">";
+		let error = deferr;
+
 		for(let i = 0; i < paramNames.length; i++)
 			paramKeys[paramNames[i]] = i;
 
@@ -322,19 +325,26 @@ Single Line Field Name: Single Line Info Here
 							elevated: script.userexec
 						};
 
-						for(let t = 0; t < script.lines.length; t++)
+						try
 						{
-							subSource.content = script.lines[t];
-							process(subSource);
+							for(let t = 0; t < script.lines.length; t++)
+							{
+								subSource.content = script.lines[t];
+								process(subSource);
+							}
+
+							if(subSource.print.diff)
+								subSource.print.txt += "\n```";
+
+							if(subSource.print.txt.length > 0)
+							{
+								let printLines = UTILS.split(subSource.print.txt, '\n');
+								sets.push(...printLines);
+							}
 						}
-
-						if(subSource.print.diff)
-							subSource.print.txt += "\n```";
-
-						if(subSource.print.txt.length > 0)
+						catch(e)
 						{
-							let printLines = UTILS.split(subSource.print.txt, '\n');
-							sets.push(...printLines);
+							error += '\n' + e;
 						}
 					}
 					else
@@ -444,7 +454,7 @@ Single Line Field Name: Single Line Info Here
 							let words = UTILS.split(value, " ");
 
 							for(let t = 0; t < words.length; t++)										
-								aliasLib[words[t]] = true;
+								aliasLib[UTILS.toArgName(words[t])] = true;
 
 							continue;
 						}
@@ -556,9 +566,6 @@ Single Line Field Name: Single Line Info Here
 			field.name += HELP[cont] + ":";
 			fields[fields.length] = field;
 		}
-
-		let deferr = "<@" + message.author + ">";
-		let error = deferr;
 						    
 		if(postNo !== "")
 		{

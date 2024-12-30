@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!var def {!tag {1} defense}","!if {!tag {1} equip_head} = 🎩","!var bonus {!round {!div {!tag {1} inv_id2} 4} down}","!if {bonus} > 50","!var bonus 50","!end","!var def {!add {def} {bonus}}","!end","!if {def} > 250","!var def 250","!end","!say {def}"]}

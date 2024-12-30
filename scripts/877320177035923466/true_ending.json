@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!tag {1} score {!add {!tag {1} score} 5000}","!tag {1} winner w","!say ## You have won the game!\n### +5000 Points"]}

@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!say {!e heal {1} 8}\n{!e player_se {1} ID1 10}\n{!e player_se {1} ID6 10}"]}

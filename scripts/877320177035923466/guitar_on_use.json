@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!tag {1} equip_weapon} != 🎸","!throw You must equip the 🎸 Electric Guitar in order to use it.","!end","!if {!is {1} used_guitar} = True","!throw You have already used the 🎸 Electric Guitar once in this battle.","!end","!tag {1} used_guitar t","!say {!e player_se {1} ID3 1}"]}

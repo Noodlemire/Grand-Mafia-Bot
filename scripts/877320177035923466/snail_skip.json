@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!say {!e monster_se {1} ID4 1}","!if {!tag {1} monster_se_id4} = 1","!tag {1} monster_se_id4 2","!end"]}

@@ -562,7 +562,7 @@ module.exports = (g) =>
 			else
 			{
 				if(source.deferred || source.reply || source.send)
-					output += "Player " + player.num + ": Tag \"" + key + "\" is currently set to \"" + (player.tags[key] || "") + "\".";
+					output += "Player " + player.num + ": Tag \"" + key + "\" is currently set to \"" + String(player.tags[key]) + "\".";
 				else
 					output += (player.tags[key] || "");
 			}
@@ -614,7 +614,7 @@ module.exports = (g) =>
 
 			if(source.deferred || source.reply || source.send)
 			{
-				output += "Player " + player.num + " does " + (player.tags[key] === undefined ? "not " : "") + "have Tag \"" + key + "\"";
+				output += "Player " + player.num + " is " + (player.tags[key] === undefined ? "not " : "") + "Tagged with \"" + key + "\"";
 			}
 			else
 				output += (player.tags[key] === undefined ? "False" : "True");
@@ -652,7 +652,7 @@ module.exports = (g) =>
 		if(value === "-")
 		{
 			delete defaults[key];
-			UTILS.msg(source, "+Tag Default \"" + key + "\" deleted.");
+			UTILS.msg(source, "-Tag Default \"" + key + "\" deleted.");
 		}
 		else if(value !== "")
 		{
@@ -660,7 +660,7 @@ module.exports = (g) =>
 			UTILS.msg(source, "+Tag Default \"" + key + "\" set to \"" + value + "\".");
 		}
 		else
-			UTILS.msg(source, "+Tag Default \"" + key + "\" is currently set to \"" + (defaults[args[1]] || "null") + "\".");
+			UTILS.msg(source, "Tag Default \"" + key + "\" is currently set to \"" + String(defaults[key]) + "\".");
 
 		overwrite(source);
 	});

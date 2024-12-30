@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!tag {1} equip_weapon} = 🔪 and {!tag {1} inv_id88} = 1","!throw You must unequip your last 🔪 Throwing Knife before you can use it.","!end","!say {!e direct_damage {1} {2}}"]}

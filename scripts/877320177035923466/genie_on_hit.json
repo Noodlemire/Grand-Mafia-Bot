@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!is {1} gmv} = False","!var next {!rc ID5 ID0 ID8}","!else {!tag {1} gmv} = ID5","!var next ID0","!else {!tag {1} gmv} = ID0","!var next ID8","!else","!var next ID5","!end","!tag {1} gmv {next}","!say {!e player_se {1} {next} 6}"]}

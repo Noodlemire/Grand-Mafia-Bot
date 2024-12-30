@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!tag {1} monster_max_attack} > {!tag {1} monster_min_attack}","!var redu {!round {!div {!add {!tag {1} monster_min_attack} {!tag {1} monster_max_attack}} 2} down}","!say The ⛵ Battleship's Base Max Attack has been reduced to **{redu}**!","!tag {1} monster_max_attack {redu}","!end"]}

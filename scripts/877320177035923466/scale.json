@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!say {!add 1 {!mult 0.025 {!sub {2} {!data monster {1} meta min_depth}}}}"]}

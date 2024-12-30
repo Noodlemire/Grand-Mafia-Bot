@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!is {1} gmv} = False and {!r 3} = 1","!tag {1} gmv L","!say {!e player_se {1} ID4 1}","!end"]}

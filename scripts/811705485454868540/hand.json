@@ -1,1 +1,1 @@
-{"userexec":true,"lines":["!for p 1 {1}","!say **Hand** (Max 5 start of phase)","!say - Attack!","!say - Block!","!say {!e draw 3}","!say _ _","!say (2 card combines remaining)","!say _ _","!say _ _","!say _ _","!end"]}
+{"userexec":false,"lines":["!for p 1 {1}","!say **Hand** (Max 5 start of phase)\n- <:attack:1223432944287223868> Attack!\n- <:defense:1223433001489273003> Block!\n{!e draw 3}\n_ _\n<:cards:1249548633536466964> Card Combines: 2\n<:room:1245922468808495114> Channels: 3","!if {p} < {1}","!say _ _\n_ _\n_ _","!end","!end"]}

@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!var hp {!tag {1} hp}","!if {hp} <= {!mult {!tag {1} max_hp} 0.1}","!var hp_warn 🆘","!else {hp} < 10 or {hp} <= {!mult {!tag {1} max_hp} 0.3}","!var hp_warn ⚠️","!else","!var hp_warn _ _","!end","!say {hp_warn}"]}

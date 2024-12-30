@@ -1,1 +1,1 @@
-{"userexec":false,"lines":["!var max {!add {!tag {1} max_attack} {!tag {1} max_attack_mod}}","!say {max}"]}
+{"userexec":false,"lines":["!throw Removed Script: max_attack"]}

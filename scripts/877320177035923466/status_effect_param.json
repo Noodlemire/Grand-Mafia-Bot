@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!say Emoji: {1}\nAliases: {1}\nType: {2}","!if {!exists 3} = True","!say Duration: {3}","!end"]}

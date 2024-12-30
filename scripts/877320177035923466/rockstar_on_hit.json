@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!flip} = Heads","!say {!e player_se {1} ID5 1}","!end"]}

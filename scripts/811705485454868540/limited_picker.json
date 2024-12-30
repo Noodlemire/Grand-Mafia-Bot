@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!if {#} < 2","!throw Usages: !e limited_picker <max> <Player 1> [Player 2] [Player N...]","!end","!foreach i n {!rlist {!sub {#} 1}}","!if {i} <= {1}","!say {{!add {n} 1}}","!end","!end"]}
