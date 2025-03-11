@@ -1,1 +1,0 @@
-{"userexec":true,"lines":["!var errmsg You have not submitted any actions.","!if {!exists ac} = False","!throw {errmsg}","!end","!var mac 0","!for i 1 {ac}","!if {users{i}} = {!me}","!var mac {!add {mac} 1}","!var ma{mac} {acts{i}}","!end","!end","!if {mac} = 0","!throw {errmsg}","!end","!say Your actions:","!for i 1 {mac}","!say {i}. {ma{i}}","!end"]}

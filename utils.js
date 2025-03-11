@@ -353,7 +353,7 @@ module.exports = (g) =>
 	{
 		if(!name) return;
 
-		name = name.toLowerCase();
+		name = UTILS.toArgName(name);
 
 		for(let a = 0; a < players.length; a++)
 		{
@@ -534,7 +534,7 @@ module.exports = (g) =>
 		return false;
 	}
 
-	UTILS.msg = (src, txt, nodiff, line, menu) =>
+	UTILS.msg = (src, txt, nodiff, line, menu, codemode, codetype) =>
 	{
 		txt = String(txt);
 
@@ -548,14 +548,51 @@ module.exports = (g) =>
 		line = (line || 0);
 
 		if(line + size < txt.length)
-			while(txt[line+size-1] && txt[line+size-1] != '\n')
+			while(txt[line+size-1] && txt[line+size-1] !== '\n')
 				size--;
 
 		if(size <= 0)
 			size = CONTENT_LIMIT;
 
 		let t = txt.substring(line, line + size);
-		let message = (nodiff && t || "```diff\n" + t + "```");
+		if(codemode) t = "```" + codetype + '\n' + t;
+		let message = (nodiff ? t : "```diff" + "\n" + t + "```");
+
+		if(nodiff)
+		{
+			let typing = false;
+
+			for(let c = line; c < line+size-2; c++)
+			{
+				if(typing)
+				{
+					let char = txt.substring(c, c+1);
+
+					if(char.match(/[a-z0-9\.]/i) && codetype.length < 20)
+						codetype += char;
+					else
+					{
+						typing = false;
+
+						if(char !== '\n')
+							codetype = "";
+					}
+				}
+				else if(txt.substring(c, c+3) === "```")
+				{
+					codemode = !codemode;
+					codetype = "";
+
+					if(codemode && (c === line || txt.substring(c-1, c) === '\n'))
+						typing = true;
+
+					c += 2;
+				}
+			}
+
+			if(codemode)
+				message += "```";
+		}
 
 		if(!menu)
 		{
@@ -572,7 +609,7 @@ module.exports = (g) =>
 					buttons.components[3].setDisabled(true);
 
 				menu = {type: "text", buttons, page: 1, list: [message], time: new Date().getTime()};
-				return UTILS.msg(src, txt, nodiff, line + size, menu);
+				return UTILS.msg(src, txt, nodiff, line + size, menu, codemode, codetype);
 			}
 			else
 			{
@@ -591,7 +628,7 @@ module.exports = (g) =>
 			menu.list[menu.list.length] = message;
 
 			if(line + t.length < txt.length)
-				return UTILS.msg(src, txt, nodiff, line + size, menu);
+				return UTILS.msg(src, txt, nodiff, line + size, menu, codemode, codetype);
 			else
 			{
 				let sfunc = src.deferred ? "editReply" : "reply";

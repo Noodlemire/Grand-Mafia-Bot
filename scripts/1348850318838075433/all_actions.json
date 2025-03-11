@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!exists round} = False","!throw No actions submitted yet.","!end","!for r 1 {round}","!say Round {r}:","!for a 1 {round_{r}_#}","!var aid {round_{r}_{a}}","!say - **@{user_{aid}}:** {!e to_str {card_{aid}}} on **@{target_{aid}}** [{aid}]","!end","!if {r} < {round}","!say _ _","!end","!end"]}

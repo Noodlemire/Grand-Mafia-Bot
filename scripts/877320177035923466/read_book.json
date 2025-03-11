@@ -1,1 +1,1 @@
-{"userexec":false,"lines":["!if {!tag {1} monster} = ID34","!throw You must already be insane...","!end","!tag {1} se_id4 5","!say {!e direct_damage {1} {!round {!div {!tag {1} monster_hp} 2} up}}\nYou gain **💫 Stunned 5**!"]}
+{"userexec":false,"lines":["!if {!tag {1} monster} = ID34","!throw You must already be insane...","!end","!if {!tag {1} equip_body} = 🦺","!var dur 3","!else","!var dur 5","!end","!tag {1} se_id4 {dur}","!say {!e direct_damage {1} {!round {!div {!tag {1} monster_hp} 2} up}}\nYou gain **💫 Stunned {dur}**!"]}

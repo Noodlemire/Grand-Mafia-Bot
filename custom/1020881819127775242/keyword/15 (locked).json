@@ -1,1 +1,0 @@
-{"aliases":["slick"],"author":"298205270201597955","title":"Slick","params":{},"fields":[],"meta":{},"desc":"Whenever this player adds or removes a card from their hand, they will draw or discard double. When playing a card, only one will play and the other will be discarded. This lasts for two turns, unless otherwise specified.","id":15,"locked":true}

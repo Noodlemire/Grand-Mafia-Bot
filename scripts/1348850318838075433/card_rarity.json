@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!isint {!at 3 {1}}} = True","!say {!data card {1} params rarity}","!else","!var c1 {!at 1 {1}}{!at 2 {1}}","!var c2 {!at 3 {1}}{!at 4 {1}}","!if {!data card {c1} params rarity} = Special or {!data card {c2} params rarity} = Special","!say Special","!else","!say Common","!end","!end"]}

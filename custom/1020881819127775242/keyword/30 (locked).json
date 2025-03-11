@@ -1,1 +1,0 @@
-{"aliases":["countdown"],"author":"298205270201597955","title":"Countdown","params":{},"fields":[],"meta":{},"desc":"- Mechanic for 🎲 cards. **Countdowns** are a number, for example, 12.\n- When you put a die in a countdown card, reduce the **Countdown** by the number on the die.\n- When a **Countdown** hits 0 or less, the **Countdown** Effect happens.","id":30,"locked":true}

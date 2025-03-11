@@ -345,6 +345,23 @@ module.exports = (g) =>
 		UTILS.msg(source, text.toUpperCase());
 	});
 
+	register_scmd(["titlecase", "title"], "<Text...>", "Titlecase", "Convert provided text to appear like it should be a Title.",
+	{
+		minArgs: 1, slashOpts:
+		[
+			{datatype: "String", oname: "text", func: (str) => str.setDescription("The text that will be converted.")},
+		]
+	},
+	(chn, source, e, args) =>
+	{
+		let text = args[0];
+
+		for(let i = 1; i < args.length; i++)
+			text += ' ' + args[i];
+
+		UTILS.msg(source, UTILS.titleCase(text));
+	});
+
 	register_scmd(["is_int", "isint"], "<String>", "Is Integer", "Check if a string of characters counts as a whole number or not.",
 	{
 		minArgs: 1, slashOpts:
@@ -525,7 +542,7 @@ module.exports = (g) =>
 					arrStr = args[2];
 
 					for(let i = 3; i < args.length; i++)
-						arrStr += '\n' + args[i];
+						arrStr += ' ' + args[i];
 
 					arr = UTILS.split(subprocess(source, arrStr, 0, true), '\n');
 
@@ -1037,8 +1054,6 @@ module.exports = (g) =>
 		if(!fs.existsSync(file)) throw "Unknown script: " + title;
 
 		let script = JSON.parse(fs.readFileSync(file, "utf8"));
-
-		if(!script.userexec && !source.member.permissions.has(ELEVATED)) throw "You do not have permission to execute this script!";
 
 		let output = "";
 		let tablevel = 0;

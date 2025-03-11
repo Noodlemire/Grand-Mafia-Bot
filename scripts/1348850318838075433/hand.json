@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!var me {!num}","!if {me} = None","!throw You are not a registered player!","!end","!say **HP:** {!tag {me} hp}/{!tag {me} max_hp}\n**Ammo:** {!tag {me} ammo}\n_ _\n**Hand:**","!if {!tag {me} hand#} = 0","!say (Empty)","!else","!for i 1 {!tag {me} hand#}","!say - {!e to_str {!tag {me} hand{i}}}","!end","!end"]}

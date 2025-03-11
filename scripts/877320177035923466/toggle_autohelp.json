@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!if {!exists autohelp_{!me}} = False or {autohelp_{!me}} = Active","!g autohelp_{!me} Inactive","!else","!g autohelp_{!me} Active","!end","!say AutoHelp is now: {autohelp_{!me}}"]}

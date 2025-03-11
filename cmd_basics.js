@@ -34,7 +34,7 @@ function help(commands, e, cmd, pre)
 
 module.exports = (g) =>
 {
-	const {PRE, UTILS, add_cmd, add_scmd, commands, overwrite} = g;
+	const {PRE, UTILS, add_cmd, add_scmd, commands, menus, overwrite} = g;
 	let i = 0;
 	
 	function _cmd(cmd, name, param, title, desc, meta, func)
@@ -321,6 +321,66 @@ module.exports = (g) =>
 		UTILS.msg(source, txt, true);
 	});
 
+	register_scmd("send", "<#Channel> <Message>", "Send", "Send a message to a specific channel. 2000 character limit applies. WARNING: Can ping.", {adminOnly: true, minArgs: 2, slashOpts:
+	[
+		{datatype: "String", oname: "channel", func: (str) => str.setDescription("#Channel to send the message to.")},
+		{datatype: "String", oname: "message", func: (str) => str.setDescription("The text that the bot will repeat.")}
+	]},
+	(chn, source, e, args) =>
+	{
+		let channel = source.guild.channels.cache.get(args[0].substring(2, args[0].length-1));
+		let txt = args[1];
+
+		if(!channel)
+			throw "Invalid channel: " + args[0];
+
+		for(let i = 2; i < args.length; i++)
+			txt += ' ' + args[i];
+
+		if(txt.length > 2000)
+			throw "Attempt to send message that is over 2000 characters long!";
+
+		channel.send(txt).then(() => UTILS.msg(source, "+Sent!")).catch((err) => UTILS.msg(source, "-ERROR: " + err));
+	});
+
+	register_scmd(["edit_message", "edit_msg", "editmessage", "editmsg", "emsg", "em"], "<Message Link> <Replacement Text>", "Edit Message", "Edit a non-menu message that the bot has previously sent.", {adminOnly: true, minArgs: 2, slashOpts:
+	[
+		{datatype: "String", oname: "link", func: (str) => str.setDescription("Full URL of the message to edit.")},
+		{datatype: "String", oname: "message", func: (str) => str.setDescription("The text that the bot will repeat.")}
+	]},
+	(chn, source, e, args) =>
+	{
+		let link = args[0];
+		let txt = args[1];
+
+		for(let i = 2; i < args.length; i++)
+			txt += ' ' + args[i];
+
+		if(txt.length > 2000)
+			throw "Attempt to edit a message into being over 2000 characters long!";
+
+		let ids = UTILS.split(link.substring(29), '/');
+		let g = ids[0];
+		let c = ids[1];
+		let m = ids[2];
+
+		if(link.substring(0, 29) != "https://discord.com/channels/" || !g || !c || !m || ids.length > 3)
+			throw "'" + link + "' is not a valid message link.";
+		if(source.guild.id !== g)
+			throw "You may not send a message to a channel in a different server.";
+		if(menus[m])
+			throw "You may not edit an active menu.";
+
+		let channel = source.guild.channels.cache.get(c);
+		if(!channel)
+			throw "Cannot find the channel that this message belongs to.";
+
+		channel.messages.fetch(m).then((message) =>
+		{
+			message.edit({content: txt, allowedMentions: {repliedUser: false}}).then(() => UTILS.msg(source, "+Edit complete!")).catch((err) => UTILS.msg(source, "-ERROR: " + err));
+		}).catch((err) => UTILS.msg(source, "-ERROR: " + err));
+	});
+
 	register_scmd(["throw_error", "throwerror", "throw", "error"], "<Message>", "Throw Error", "Debug; Stop execution of current command/script with an error message.", {minArgs: 1, slashOpts: [{datatype: "String", oname: "message", func: (str) => str.setDescription("The text that the bot will repeat.")}]}, (chn, source, e, args) =>
 	{
 		let txt = args[0];
@@ -360,6 +420,16 @@ module.exports = (g) =>
 			txt += ' ' + args[i];
 
 		UTILS.msg(source, UTILS.toArgName(txt));
+	});
+
+	register_scmd(["to_arg2", "toarg2", "arg2"], "<Text...>", "Convert Text To Argument 2", "Convert text to a SUPER parameter-friendly format: Lowercase, underscores, no special characters.", {minArgs: 1, slashOpts: [{datatype: "String", oname: "text", func: (str) => str.setDescription("The text that the bot convert to an argument.")}]}, (chn, source, e, args) =>
+	{
+		let txt = "";
+
+		for(let i = 0; i < args.length; i++)
+			txt += ' ' + args[i];
+
+		UTILS.msg(source, UTILS.toArgName(txt, true));
 	});
 
 	register_scmd(["my_id", "myid", "me"], "", "My ID", "Show your unique User ID number.", (chn, source, e, args) =>

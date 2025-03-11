@@ -1,1 +1,1 @@
-{"userexec":true,"lines":["!say __**Leaderboard**__","!for i 1 10","!if {!exists top_{i}_score} = True","!say {i}. <@{top_{i}_player}>: **{top_{i}_score}** {top_{i}_equips}","!end","!end"]}
+{"userexec":true,"lines":["!say __**Leaderboard**__","!for i 1 10","!if {!exists top_{i}} = True","!say {i}. <@{top_{i}}>: **{pb_{top_{i}}}** {pbe_{top_{i}}}","!end","!end"]}

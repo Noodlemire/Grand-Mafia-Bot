@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!if {#} < 1","!throw Usage: !e discard <card>","!end","!var args {1}","!for i 2 {#}","!var args {args} {{i}}","!end","!say {!e lose_card true {args}}"]}

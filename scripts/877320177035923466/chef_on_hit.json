@@ -1,1 +1,1 @@
-{"userexec":false,"lines":["!say {!e player_se {1} {!rid status_effect * Negative} 2}"]}
+{"userexec":false,"lines":["!var se {!rid status_effect * Negative}","!if {se} = ID8","!tag {1} queue_chill 2","!end","!say {!e player_se {1} {se} 2}"]}

@@ -521,7 +521,7 @@ module.exports = (g) =>
 				let txt = "There are multiple objects with the given alias. Here are their IDs:";
 
 				for(let i = 0; i < ids.length; i++)
-					txt += "\n" + alias + " " + i+1 + ": ID" + ids[i];
+					txt += "\n" + alias + " " + (i+1) + ": ID" + ids[i];
 
 				UTILS.msg(source, txt);
 			}
@@ -968,7 +968,7 @@ module.exports = (g) =>
 		});
 	});
 
-	register_cmd(["random_id", "randomid", "rid"], "<structure> [param1] [param2] [param3] [param4] [param5] [author id]", "Random ID", "For scripting purposes.\n\nGet a random object ID, filterable by Param.\n\nThis is essentially a script-compatible version of the `/rand_` series of server commands, following all the same filtering rules.\n\nOutputs only the numeric ID of the random object, or -1 if nothing was found.", {minArgs: 1}, (chn, source, e, args) =>
+	register_cmd(["random_id", "randomid", "rid"], "<structure> [param1] [param2] [param3] [param4] [param5] [author id] [any rate]", "Random ID", "For scripting purposes.\n\nGet a random object ID, filterable by Param.\n\nThis is essentially a script-compatible version of the `/rand_` series of server commands, following all the same filtering rules.\n\nOutputs only the numeric ID of the random object, or -1 if nothing was found.\n\n`any rate` is a multiplier from 0.0 to 1.0, which affects how likely objects are to spawn purely due to Meta tags such as `spawn_as_any` or `spawn_if_parent`. If you use a given filter, and you must have a result that 'truly' matches your given filter, you can set this to 0 to block anies entirely", {minArgs: 1}, (chn, source, e, args) =>
 	{
 		UTILS.inherit(SERVER_DATA, source, (data) =>
 		{
@@ -976,9 +976,12 @@ module.exports = (g) =>
 			let sname = UTILS.toArgName(args[0], true);
 
 			if(!sdata[sname])
-				throw "-There is no Structure with the name: " + sname;
+				throw "There is no Structure with the name: " + sname;
 
 			args.splice(0, 1);
+
+			if(!UTILS.isNum(args[6], true))
+				throw "The Any Rate must be a valid number! '" + args[6] + "' is not.";
 
 			let result = sdata[sname].roll(chn, source, e, args);
 

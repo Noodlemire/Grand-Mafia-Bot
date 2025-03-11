@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!is {1} ballet_prediction} = True","!throw You already know your next attack's damage. ({!tag {1} ballet_prediction})","!end","!var min {!e get_attack {1} min player}","!var max {!e get_attack {1} max player}","!tag {1} ballet_prediction {!e roll_attack {1} {min} {max}}","!say Your next attack deals **{!tag {1} ballet_prediction}** damage."]}

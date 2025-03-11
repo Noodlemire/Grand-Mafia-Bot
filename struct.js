@@ -132,6 +132,8 @@ module.exports = (g) =>
 
 				supply_gcmd_args(roll_gcmd, 0, undefined, "[Author ID]", false, name.parent, name.param1, name.param2, name.param3, name.param4, "Filter by " + name.parent + ". You may choose multiple; use `|` to separate them.", "Filter by special value. You may choose multiple; use `|` to separate them.");
 
+				roll_gcmd.meta.slashOpts.push({datatype: "Number", oname: "any_rate", func: (str) => str.setDescription("Chance of spawning only due to Meta, such as `spawn_as_any` or `spawn_if_parent`. Default: 0.1").setMinValue(0).setMaxValue(1)});
+
 				add_gcmd(serverid, "register_" + name.name, reg_gcmd);
 				add_gcmd(serverid, name.name + "_list", list_gcmd);
 				add_gcmd(serverid, "rand_" + name.name, roll_gcmd);
@@ -238,7 +240,7 @@ module.exports = (g) =>
 										fixAlisLib[acronym] = true;
 
 									if(acronym_short.length > 1)
-										fixAlisLib[acronym_short] = true;
+								roll_gcmd		fixAlisLib[acronym_short] = true;
 								}
 
 								delete fixAlisLib[""];
@@ -313,6 +315,8 @@ module.exports = (g) =>
 				supply_gcmd_args(list_gcmd, 0, undefined, undefined, false, parent, param1, param2, param3, param4, "Filter by " + parent + ". You may choose multiple; use `|` to separate them.", "Filter by special value. You may choose multiple; use `|` to separate them.");
 
 				supply_gcmd_args(roll_gcmd, 0, undefined, undefined, false, parent, param1, param2, param3, param4, "Filter by " + parent + ". You may choose multiple; use `|` to separate them.", "Filter by special value. You may choose multiple; use `|` to separate them.");
+
+				roll_gcmd.meta.slashOpts.push({datatype: "Number", oname: "any_rate", func: (str) => str.setDescription("Chance of spawning only due to Meta, such as `spawn_as_any` or `spawn_if_parent`. Default: 0.1").setMinValue(0).setMaxValue(1)});
 
 				add_gcmd(serverid, "register_" + name, reg_gcmd, true);
 				add_gcmd(serverid, name + "_list", list_gcmd, true);
@@ -761,7 +765,7 @@ module.exports = (g) =>
 
 				if(struct.struct) struct = data.structs[struct.struct];
 
-				for(let i = 0; i < args.length; i++)
+				for(let i = 0; i < Math.min(args.length, 5); i++)
 				{
 					if(args[i])
 					{
@@ -772,6 +776,9 @@ module.exports = (g) =>
 								filters[i][n] = UTILS.toArgName(filters[i][n]);
 					}
 				}
+
+				let anyRate = UTILS.gate(0, (args[6] === undefined ? 0.1 : parseFloat(args[6])), 1);
+				let allowAny = (anyRate > Math.random());
 
 				for(let id = 0; id < struct.getMaxID(); id++)
 				{
@@ -818,7 +825,7 @@ module.exports = (g) =>
 
 								if(filters[i].length > 0
 										&& ((!UTILS.matchOne(paramlist[i], filters[i])
-										&& !UTILS.containsString(spawn_any, paramNames[i]))
+										&& (!allowAny || !UTILS.containsString(spawn_any, paramNames[i])))
 										|| UTILS.matchOne(exclist[i], filters[i])))
 								{
 									allowed = false;
@@ -826,7 +833,7 @@ module.exports = (g) =>
 								}
 							}
 
-							if(allowed && spawn_if_parent && filters[0] && filters[0].length > 0)
+							if(allowed && allowAny && spawn_if_parent && filters[0] && filters[0].length > 0)
 							{
 								allowed = false;
 

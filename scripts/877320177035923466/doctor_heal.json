@@ -1,1 +1,1 @@
-{"userexec":false,"lines":["!if {!tag {1} monster_hp} < {!mult {!tag {1} monster_max_hp} 0.25} and {!is {1} gmv} = False","!tag {1} gmv w","!tag {1} monster_hp {!tag {1} monster_max_hp}","!say The doctor heals to **full HP**!","!end"]}
+{"userexec":false,"lines":["!if {!tag {1} monster_hp} < {!mult {!tag {1} monster_max_hp} 0.25} and {!is {1} gmv} = False","!if {!is {1} monster_se_id15} = False","!tag {1} gmv w","!tag {1} monster_hp {!tag {1} monster_max_hp}","!say The doctor heals to **full HP**!","!else","!say The doctor is 🩸 Bleeding too much to heal.","!end","!end"]}

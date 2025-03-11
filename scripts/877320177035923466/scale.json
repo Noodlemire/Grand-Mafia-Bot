@@ -1,1 +1,1 @@
-{"userexec":false,"lines":["!say {!add 1 {!mult 0.025 {!sub {2} {!data monster {1} meta min_depth}}}}"]}
+{"userexec":false,"lines":["!var m 0.025","!if {!has monster {1} scale_mult} = True","!var m {!mult {m} {!data monster {1} meta scale_mult}}","!end","!say {!add 1 {!mult {m} {!sub {2} {!data monster {1} meta min_depth}}}}"]}

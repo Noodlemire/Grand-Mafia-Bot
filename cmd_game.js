@@ -257,6 +257,46 @@ module.exports = (g) =>
 		UTILS.embed(source, e);
 	});
 
+	register_scmd(["view_player", "viewplayer", "get_player", "getplayer", "player"], "<Player Name or ID or Number>", "Get Player", "View the information of a specific player.", {adminOnly: true, ephemeral: true, minArgs: 1, slashOpts: [{datatype: "String", oname: "player", func: (str) => str.setDescription("Name, Number, or ID of a player")}]}, (chn, source, e, args) =>
+	{
+		let pdata = SERVER_DATA[source.guild.id].players;
+		let arg = args[0];
+
+		for(let i = 1; i < args.length; i++)
+			arg += ' ' + args[i];
+
+		let player = UTILS.isInt(arg)
+			? pdata[parseInt(arg)-1]
+			: UTILS.isLong(arg)
+			? UTILS.getPlayerByID(pdata, arg)
+			: UTILS.getPlayerByName(pdata, arg);
+
+		if(!player)
+			throw "-ERROR: Player \"" + arg + "\" is not valid.";
+
+		if(source.deferred || source.reply || source.send)
+		{
+			let output = ">>> Player " + player.num + ": **" + UTILS.titleCase(player.dispname || "") + "** (<@" + (UTILS.isLong(player.id) ? player.id : "NPC") + ">)\nChannel: <#" + player.channel + ">\nNicks: ";
+
+			for(let n = 0; n < player.nicknames.length; n++)
+			{
+				output += player.nicknames[n];
+
+				if(n < player.nicknames.length-1)
+					output += ", ";
+			}
+
+			output += "\n\nTags:";
+
+			for(let tag in player.tags)
+				output += "\n\"" + tag + "\": \"" + player.tags[tag] + "\"";
+
+			UTILS.msg(source, output, true);
+		}
+		else
+			UTILS.msg(source, player.num);
+	});
+
 	register_scmd(["my_num", "mynum", "num"], "", "My Player Number", "Learn what your Player Number is, if you are registered.", (chn, source, e, args) =>
 	{
 		let user = UTILS.getPlayerByID(SERVER_DATA[source.guild.id].players, source.member.id);

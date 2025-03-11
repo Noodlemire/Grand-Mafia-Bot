@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!is {1} first_attack} = True","!throw You cannot use this item because you have already attacked the enemy.","!else {!is {1} used_emblem} = True","!throw You have already used a 💠 Permafrost Emblem in this battle!","!end","!tag {1} used_emblem t","!say {!e player_se {1} {2} {3}}","!say {!e monster_se {1} {2} {3}}"]}
