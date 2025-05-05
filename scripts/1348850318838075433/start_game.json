@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!g round 1","!foreach _ plr {!arg {!players}}","!send {!tag {plr} channel} **HP:** {!tag {plr} hp}/{!tag {plr} max_hp}\n**Ammo:** {!tag {plr} ammo}\n_ _\n**Hand:**\n{!e get_card {plr} ID0 {!rid card} {!rid card} {!rid card} {!rid card}}","!end","!overwrite"]}

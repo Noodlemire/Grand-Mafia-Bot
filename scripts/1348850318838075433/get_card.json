@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!var me {1}","!for i 2 {#}","!tag {me} hand{!add {!tag {me} hand#} {i} -1} {{i}}","!say - {!data category {!e card_category {{i}}} meta emoji} {!e to_str {{i}}}","!end","!tag {me} hand# {!add {!tag {me} hand#} {#} -1}"]}

@@ -545,7 +545,6 @@ module.exports = (g) =>
 						arrStr += ' ' + args[i];
 
 					arr = UTILS.split(subprocess(source, arrStr, 0, true), '\n');
-
 					init = 1;
 					elem = args[1];
 					loc[elem] = arr[init-1];
@@ -1019,7 +1018,11 @@ module.exports = (g) =>
 					if(!subSource.print.diff)
 						subSource.print.txt += "\n```diff";
 
-					subSource.print.txt += "\n-ERROR: " + err + "\n```";
+					if(source.member.permissions.has(ELEVATED))
+						subSource.print.txt += "\n-Script Error: " + err + "\nAt line: " + script.lines[i] + "\n\nLocals: " + UTILS.display(subSource.locals) + "\n```";
+					else						
+						subSource.print.txt += "\n-Error: " + err.substring(0, err.length - 1) + "\n```";
+
 					break;
 				}
 			}

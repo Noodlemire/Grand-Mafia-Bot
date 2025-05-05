@@ -297,6 +297,46 @@ module.exports = (g) =>
 			UTILS.msg(source, player.num);
 	});
 
+	register_scmd(["player_channel", "playerchannel", "pc"], "<Player Name or ID or Number>", "Get Player Channel", "Get the Channel ID of a given player.", {adminOnly: true, ephemeral: true, minArgs: 1, slashOpts: [{datatype: "String", oname: "player", func: (str) => str.setDescription("Name, Number, or ID of a player")}]}, (chn, source, e, args) =>
+	{
+		let pdata = SERVER_DATA[source.guild.id].players;
+		let arg = args[0];
+
+		for(let i = 1; i < args.length; i++)
+			arg += ' ' + args[i];
+
+		let player = UTILS.isInt(arg)
+			? pdata[parseInt(arg)-1]
+			: UTILS.isLong(arg)
+			? UTILS.getPlayerByID(pdata, arg)
+			: UTILS.getPlayerByName(pdata, arg);
+
+		if(!player)
+			throw "-ERROR: Player \"" + arg + "\" is not valid.";
+
+		UTILS.msg(source, "<#" + player.channel + ">", true);
+	});
+
+	register_scmd(["player_name", "playername", "pn"], "<Player Name or ID or Number>", "Get Player Name", "Get the Display Name of a given player.", {adminOnly: true, ephemeral: true, minArgs: 1, slashOpts: [{datatype: "String", oname: "player", func: (str) => str.setDescription("Name, Number, or ID of a player")}]}, (chn, source, e, args) =>
+	{
+		let pdata = SERVER_DATA[source.guild.id].players;
+		let arg = args[0];
+
+		for(let i = 1; i < args.length; i++)
+			arg += ' ' + args[i];
+
+		let player = UTILS.isInt(arg)
+			? pdata[parseInt(arg)-1]
+			: UTILS.isLong(arg)
+			? UTILS.getPlayerByID(pdata, arg)
+			: UTILS.getPlayerByName(pdata, arg);
+
+		if(!player)
+			throw "-ERROR: Player \"" + arg + "\" is not valid.";
+
+		UTILS.msg(source, firstname(player));
+	});
+
 	register_scmd(["my_num", "mynum", "num"], "", "My Player Number", "Learn what your Player Number is, if you are registered.", (chn, source, e, args) =>
 	{
 		let user = UTILS.getPlayerByID(SERVER_DATA[source.guild.id].players, source.member.id);
