@@ -58,7 +58,7 @@ module.exports = (g) =>
 		i = i + 1;
 	}
 
-	function player(source, pdata, defaults, args, a)
+	async function player(source, pdata, defaults, args, a)
 	{
 		let func = (user) =>
 		{
@@ -118,14 +118,14 @@ module.exports = (g) =>
 		};
 
 		if(UTILS.isLong(args[a]))
-			source.guild.members.fetch(args[a]).catch(console.error).then(func);
+			await source.guild.members.fetch(args[a]).catch(console.error).then(func);
 		else
 			func();
 	}
 
-	register_scmd(["add_player", "addplayer"], "<Player ID or NPC Name> <#Player Channel> [Nickname(s)...]", "Add Player", "Add a player or NPC into the bot's local storage, enabling use with round procesing and other features.\n\nIf you don't provide at least one nickname, the player's current display name will be used instead.\n\nIf you supply a name in place of a User ID, an NPC will be added instead. This name will also be the default nickname, if no others are provided.",
+	register_scmd(["add_player", "addplayer"], "<Player ID or NPC Name> <#Player Channel> [Nickname(s)...]", "Add Player", "Add a player or NPC into the bot's local storage, enabling use with round processing and other features.\n\nIf you don't provide at least one nickname, the player's current display name will be used instead.\n\nIf you supply a name in place of a User ID, an NPC will be added instead. This name will also be the default nickname, if no others are provided.",
 	{
-		adminOnly: true, minArgs: 2, shortDesc: "Register a player or NPC for use with round procesing and other features.", slashOpts:
+		adminOnly: true, minArgs: 2, shortDesc: "Register a player or NPC for use with round processing and other features.", slashOpts:
 		[
 			{datatype: "String", oname: "player_id", func: (str) => str.setDescription("User ID for a player, or a name for an NPC.")},
 			{datatype: "String", oname: "player_chn", func: (str) => str.setDescription("#Channel that is reserved for the player, used for whispers.")},
@@ -139,12 +139,12 @@ module.exports = (g) =>
 			{datatype: "String", oname: "nickname8", func: (str) => str.setDescription("Eighth nickname")}
 		]
 	},
-	(chn, source, e, args) =>
+	async (chn, source, e, args) =>
 	{
 		let pdata = SERVER_DATA[source.guild.id].players;
 		let defaults = SERVER_DATA[source.guild.id].defaults;
 
-		player(source, pdata, {tags: defaults || {}}, args, 0);
+		await player(source, pdata, {tags: defaults || {}}, args, 0);
 	});
 
 	register_scmd(["del_player", "delplayer"], "<Player Name or Number or *>", "Delete Player", "Remove a player from the bot's local storage.", {adminOnly: true, minArgs: 1, slashOpts: [{datatype: "String", oname: "player", func: (str) => str.setDescription("Name or Number of a player, or `*` to delete all players.")}]}, (chn, source, e, args) =>
@@ -335,6 +335,26 @@ module.exports = (g) =>
 			throw "-ERROR: Player \"" + arg + "\" is not valid.";
 
 		UTILS.msg(source, firstname(player));
+	});
+
+	register_scmd(["player_id", "playerid", "pid"], "<Player Name or ID or Number>", "Get Player ID", "Get the User ID of a given player.", {adminOnly: true, ephemeral: true, minArgs: 1, slashOpts: [{datatype: "String", oname: "player", func: (str) => str.setDescription("Name, Number, or ID of a player")}]}, (chn, source, e, args) =>
+	{
+		let pdata = SERVER_DATA[source.guild.id].players;
+		let arg = args[0];
+
+		for(let i = 1; i < args.length; i++)
+			arg += ' ' + args[i];
+
+		let player = UTILS.isInt(arg)
+			? pdata[parseInt(arg)-1]
+			: UTILS.isLong(arg)
+			? UTILS.getPlayerByID(pdata, arg)
+			: UTILS.getPlayerByName(pdata, arg);
+
+		if(!player)
+			throw "-ERROR: Player \"" + arg + "\" is not valid.";
+
+		UTILS.msg(source, player.id);
 	});
 
 	register_scmd(["my_num", "mynum", "num"], "", "My Player Number", "Learn what your Player Number is, if you are registered.", (chn, source, e, args) =>

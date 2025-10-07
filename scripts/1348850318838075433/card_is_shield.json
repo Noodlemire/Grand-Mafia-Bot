@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!isint {!at 3 {1}}} = True","!say {!has card {1} hp}","!else","!var c1 {!at 1 {1}}{!at 2 {1}}","!var c2 {!at 3 {1}}{!at 4 {1}}","!if {!has card {c1} hp} = True or {!has card {c2} hp} = True","!say True","!else","!say False","!end","!end"]}

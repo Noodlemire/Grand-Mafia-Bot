@@ -1,0 +1,1 @@
+{"aliases":["immune","cure","cu"],"author":"298205270201597955","title":"Immune","color":null,"iconURL":null,"imageURL":null,"params":{"type":"Positive","duration":"Gradual"},"fields":[],"meta":{"after_damage":"t","track_message_id":"1423459246279757966"},"desc":"Target is immune to most negative status effects.\n\n-# Hidden and incurable effects are excluded.\n","id":6}

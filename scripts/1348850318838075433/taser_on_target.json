@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!is {4} se_id6} = False","!if {3} != lala and {3} != lalala or {2} = 1","!var ta_amt {!e card_get_meta_num {3} ta_amt}","!if {!is {4} se_id4} = True","!tag {4} se_id4 {!add {!tag {4} se_id4} {ta_amt}}","!else","!tag {4} se_id4 {ta_amt}","!end","!send {action_log} ⚠️ | {!pn {4}} has become Tasered {!tag {4} se_id4}!","!end","!end"]}

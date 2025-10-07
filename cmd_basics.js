@@ -326,7 +326,7 @@ module.exports = (g) =>
 		{datatype: "String", oname: "channel", func: (str) => str.setDescription("#Channel to send the message to.")},
 		{datatype: "String", oname: "message", func: (str) => str.setDescription("The text that the bot will repeat.")}
 	]},
-	(chn, source, e, args) =>
+	async (chn, source, e, args) =>
 	{
 		let channel = source.guild.channels.cache.get(args[0].substring(2, args[0].length-1));
 		let txt = args[1];
@@ -340,7 +340,7 @@ module.exports = (g) =>
 		if(txt.length > 2000)
 			throw "Attempt to send message that is over 2000 characters long!";
 
-		channel.send(txt).then(() => UTILS.msg(source, "+Sent!")).catch((err) => UTILS.msg(source, "-ERROR: " + err));
+		await channel.send(txt).then((m) => UTILS.msg(source, m.url, true)).catch((err) => UTILS.msg(source, "-ERROR: " + err));
 	});
 
 	register_scmd(["edit_message", "edit_msg", "editmessage", "editmsg", "emsg", "em"], "<Message Link> <Replacement Text>", "Edit Message", "Edit a non-menu message that the bot has previously sent.", {adminOnly: true, minArgs: 2, slashOpts:
@@ -435,5 +435,10 @@ module.exports = (g) =>
 	register_scmd(["my_id", "myid", "me"], "", "My ID", "Show your unique User ID number.", (chn, source, e, args) =>
 	{
 		UTILS.msg(source, (source.member || source.author).id);
+	});
+
+	register_scmd("channel", "", "Channel", "Debug; Get the current channel's ID.", (chn, source) =>
+	{
+		UTILS.msg(source, "<#" + chn.id + ">", true);
 	});
 };

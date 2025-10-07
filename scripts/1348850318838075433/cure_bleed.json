@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {4} = player","!var plr {5}","!else","!var plr {1}","!end","!if {!is {plr} se_id1} = True","!tag {plr} se_id1 -","!send {action_log} ⚠️ | {!pn {plr}} is no longer Bleeding!","!end"]}

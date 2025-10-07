@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!tag {1} hp} < 1","!tag {1} hp 1","!end"]}

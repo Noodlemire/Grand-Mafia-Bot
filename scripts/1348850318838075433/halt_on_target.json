@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!var u {user_{4}}","!if {3} != haha and {3} != hahaha or {2} = 1 and {!tag {u} hp} > 0 and {!is {u} se_id6} = False","!var amt {!e card_get_meta_num {3} ha_amt}","!if {!is {u} se_id7} = True","!tag {u} se_id7 {!add {!tag {u} se_id7} {amt}}","!else","!tag {u} se_id7 {amt}","!end","!send {!pc {u}} ⚠️ | You are now Halted {!tag {u} se_id7}!","!end"]}

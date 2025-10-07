@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {5} != drdr and {5} != drdrdr or {4} = 1","!if {5} = drdr or {5} = drdrdr","!var drone {5}","!else","!var drone ID39","!end","!e get_card {1} {drone}","!send {!pc {1}} Your **{!e to_str {drone}}** has returned to your hand!","!end"]}

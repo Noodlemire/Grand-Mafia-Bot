@@ -1,0 +1,1 @@
+{"aliases":["tourists","tourist","tour"],"author":"298205270201597955","title":"Tourists","color":null,"iconURL":null,"imageURL":null,"params":{"emoji":"📸","command":"!e tourist <card>"},"fields":[],"meta":{"on_end":"tourists_cleanup","track_message_id":"1423706516015288503"},"desc":"Select any one unfused card, and turn it into a double version of itself.\n","id":1}

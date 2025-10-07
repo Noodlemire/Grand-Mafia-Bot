@@ -281,7 +281,7 @@ function getMentions(text)
 	return mentions;
 }
 
-function process(source, limit, runInBodyMode)
+async function process(source, limit, runInBodyMode)
 {
 	let channel = source.channel;
 	let embed = new EmbedBuilder();
@@ -316,7 +316,7 @@ function process(source, limit, runInBodyMode)
 		{
 			if(!meta.rawArgs)
 				for(let i = 0; i < args.length; i++)
-					args[i] = subprocess(source, args[i], limit, runInBodyMode);
+					args[i] = await subprocess(source, args[i], limit, runInBodyMode);
 
 			for(let i = args.length; i >= 0; i--)
 				if(args[i] === "")
@@ -328,7 +328,7 @@ function process(source, limit, runInBodyMode)
 				return;
 			}
 
-			commands[cmd].func(channel, source, embed, args);
+			await commands[cmd].func(channel, source, embed, args);
 
 			if(source.returned)
 				return source.returned;
@@ -338,7 +338,7 @@ function process(source, limit, runInBodyMode)
 		UTILS.msg(source, "-ERROR: Unknown command: " + PRE + cmd);
 }
 
-function subprocess(source, arg, limit, runInBodyMode)
+async function subprocess(source, arg, limit, runInBodyMode)
 {
 	let auth = source.member;
 	let loc = source.locals || locals[auth.id];
@@ -352,11 +352,11 @@ function subprocess(source, arg, limit, runInBodyMode)
 
 		while(typeof arg === "string" && cl !== undefined && op !== undefined && cl > op)
 		{
-			let subcmd = subprocess(source, arg.substring(op+1, cl).trim(), limit+1, runInBodyMode);
+			let subcmd = await subprocess(source, arg.substring(op+1, cl).trim(), limit+1, runInBodyMode);
 
 			if(subcmd.substring(0, PRE.length) === PRE)
 			{
-				arg = arg.substring(0, op) + String(process({
+				arg = arg.substring(0, op) + String(await process({
 					content: subcmd,
 					member: auth,
 					guild: source.guild,
@@ -505,7 +505,7 @@ bot.on("ready", () =>
 	refreshCommands(true);
 });
 
-bot.on("messageCreate", (message) =>
+bot.on("messageCreate", async (message) =>
 {
 	let data = SERVER_DATA[message.guild.id];
 
@@ -609,7 +609,7 @@ bot.on("messageCreate", (message) =>
 	{
 		try
 		{
-			process(message);
+			await process(message);
 		}
 		catch(err)
 		{
@@ -696,7 +696,7 @@ bot.on("interactionCreate", async (i) =>
 
 				try
 				{
-					cmd.func(i.channel, i, embed, args);
+					await cmd.func(i.channel, i, embed, args);
 				}
 				catch(err)
 				{

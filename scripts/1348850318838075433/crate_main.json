@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {4} = crate","!var tar {1}","!var card {5}","!else","!if {4} = player","!var tar {4}","!else","!var tar {1}","!end","!var card {!rc ID0 ID6 ID17}","!end","!e get_card {tar} {card}","!if {tar} = {1}","!say You got a **{!e to_str {card}}**","!else","!send {!pc {tar}} You got a **{!e to_str {card}}**","!end"]}

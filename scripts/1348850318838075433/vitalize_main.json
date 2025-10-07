@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!tag {1} hp {!add {!tag {1} hp} 2}","!tag {1} max_hp {!add {!tag {1} max_hp} 2}","!send {action_log} ⚠️ | {!pn {1}} has gained **2** max and current HP!"]}

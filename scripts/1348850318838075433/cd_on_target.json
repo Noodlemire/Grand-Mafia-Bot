@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!tag {1} se_id8 1","!send {action_log} {!data category defense meta emoji} | {!pn {1}} is now **Cheating Death!** [{6}]"]}

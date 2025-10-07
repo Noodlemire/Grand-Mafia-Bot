@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!is {3} se_id6} = False","!if {5} = attack","!var id ID16","!else {5} = defense","!var id ID17","!else","!var id ID18","!end","!if {!is {3} se_id{id}} = True","!tag {3} se_id{id} {!add {!tag {3} se_id{id}} 1}","!else","!tag {3} se_id{id} 1","!end","!end"]}

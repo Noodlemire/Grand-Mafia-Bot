@@ -1,0 +1,1 @@
+{"aliases":["potion"],"author":"654448067969548338","title":"Potion!","params":{"type":"Attack","rarity":"Common","silent":"False"},"fields":[{"name":"Effect:","value":"Heal a player for 1 HP if undefended."},{"name":"Upgraded:","value":"Heal a player for 3 HP if undefended."}],"meta":{},"id":42}

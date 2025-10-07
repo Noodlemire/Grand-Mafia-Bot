@@ -200,7 +200,7 @@ Single Line Field Name: Single Line Info Here
 		UTILS.msg(source, output, true);
 	});
 
-	return (struct, auto, message, output, locked) =>
+	return async (struct, auto, message, output, locked) =>
 	{
 		let serverid = message.guild.id;
 
@@ -330,7 +330,7 @@ Single Line Field Name: Single Line Info Here
 							for(let t = 0; t < script.lines.length; t++)
 							{
 								subSource.content = script.lines[t];
-								process(subSource);
+								await process(subSource);
 							}
 
 							if(subSource.print.diff)

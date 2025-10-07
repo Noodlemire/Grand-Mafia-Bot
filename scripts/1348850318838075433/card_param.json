@@ -1,1 +1,1 @@
-{"userexec":false,"lines":["!say Category: {1}\nRarity: {2}\nAmmo Requirement: {3}","!if {!exists 4} = True","!say Range: {4}","!if {4} != ∞","!say Meta: range: {4}","!end","!end"]}
+{"userexec":false,"lines":["!say Category: {1}\nRarity: {2}\nAmmo Requirement: {3}","!if {!exists 4} = True","!say Range: {4}","!say Meta: range: {4}","!end"]}

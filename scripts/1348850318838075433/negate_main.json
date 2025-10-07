@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {3} != nene and {3} != nenene or {2} = 1","!if {7} = attack","!var id ID13","!else {7} = defense","!var id ID14","!else","!var id ID15","!end","!var amt {!e card_get_meta_num {3} ne_amt}","!if {!is {5} se_{id}} = True","!tag {5} se_{id} {!add {!tag {5} se_{id}} {amt}}","!else","!tag {5} se_{id} {amt}","!end","!end"]}

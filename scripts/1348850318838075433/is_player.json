@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!exists pl{1}} = False","!say Null","!else","!say {!isint {!charat first {pl{1}}}}","!end"]}

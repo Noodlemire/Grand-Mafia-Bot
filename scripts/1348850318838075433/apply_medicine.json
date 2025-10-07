@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {2} = player","!var tar {3}","!else","!var tar {1}","!end","!if {!is {tar} se_id2} = True","!tag {tar} se_id2 {!add {!tag {tar} se_id2} 2}","!else","!tag {tar} se_id2 2","!end","!tag {tar} se_id0 -"]}

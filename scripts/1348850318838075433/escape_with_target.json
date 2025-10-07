@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!var u {user_{4}}","!if {2} = 1 and {5} = 1 and {1} != {u} and {!tag {u} hp} > 0","!var temp {!tag {1} pos}","!tag {1} pos {!tag {u} pos}","!tag {u} pos {temp}","!var temp {pl{!tag {1} pos}}","!g pl{!tag {1} pos} {pl{!tag {u} pos}}","!g pl{!tag {u} pos} {temp}","!send {action_log} ⚠️ | {!pn {1}} and {!pn {u}} have swapped places!","!end"]}

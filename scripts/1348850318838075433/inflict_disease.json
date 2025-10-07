@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!tag {4} se_id5 ∞","!send {action_log} {!data category attack meta emoji} | <@{!pid {4}}> has been inflicted with the **Disease!!!** [{6}]"]}

@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!e card_is_shield {3}} = False","!if {3} != jujuju and {3} != juju or {2} = 1","!var ret Retaliation?","!if {3} = juju","!var ret Re{ret}","!say Attack '{4}' was sent by **{!pn {user_{4}}}**!","!else {3} = jujuju","!var ret ReRe{ret}","!end","!e remote_play {1} {ret} on {!tag {user_{4}} pos} --fake --bypass","!end","!end"]}

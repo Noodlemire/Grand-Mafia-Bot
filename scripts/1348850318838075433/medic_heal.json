@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!foreach _ plr {!arg {!players}}","!if {!is {plr} medic_heal} = True","!tag {plr} hp {!add {!tag {plr} hp} {!tag {plr} medic_heal}}","!tag {plr} medic_heal -","!end","!end"]}

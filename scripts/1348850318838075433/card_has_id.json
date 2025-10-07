@@ -1,0 +1,1 @@
+{"userexec":false,"lines":["!if {!isint {!at 3 {1}}} = True","!if {1} = {2}","!say True","!else","!say False","!end","!else","!var c1 {!e to_id {!at 1 {1}}{!at 2 {1}}}","!var c2 {!e to_id {!at 3 {1}}{!at 4 {1}}}","!if {c1} = {2} or {c2} = {2}","!say True","!else","!say False","!end","!end"]}

@@ -497,7 +497,7 @@ module.exports = (g) =>
 		{
 			minArgs: (b === "else" ? 0 : 3), runInBodyMode: true, rawArgs: true, slashOpts: bodies[b]
 		},
-		(chn, source, e, args) =>
+		async (chn, source, e, args) =>
 		{
 			let conds = [];
 			let pid = source.member.id;
@@ -524,7 +524,7 @@ module.exports = (g) =>
 
 					if(args[3])
 					{
-						inc = subprocess(source, args[3], 0, true);
+						inc = await subprocess(source, args[3], 0, true);
 
 						if(!UTILS.isNum(inc))
 							throw "Value '" + inc + "' is not a number!";
@@ -535,7 +535,12 @@ module.exports = (g) =>
 							incStr = args[3];
 					}
 
-					init = args[1];
+					init = await subprocess(source, args[1], 0, true);
+
+					if(!UTILS.isNum(init))
+						throw "Value '" + init + "' is not a number!";
+
+					init = parseFloat(init);
 				}
 				else
 				{
@@ -544,14 +549,14 @@ module.exports = (g) =>
 					for(let i = 3; i < args.length; i++)
 						arrStr += ' ' + args[i];
 
-					arr = UTILS.split(subprocess(source, arrStr, 0, true), '\n');
+					arr = UTILS.split(await subprocess(source, arrStr, 0, true), '\n');
 					init = 1;
 					elem = args[1];
 					loc[elem] = arr[init-1];
 				}
 
 				iter = args[0];
-				conds[0] = {a: "{" + iter + "}", o: (inc > 0 || typeof inc === "string" ? "<=" : ">="), b: (b === "foreach" ? arr.length : args[2])};
+				conds[0] = {a: "{" + iter + "}", o: (inc > 0 || inc >= 0 ? "<=" : ">="), b: (b === "foreach" ? arr.length : args[2])};
 				loc[iter] = init;
 			}
 			else
@@ -656,11 +661,11 @@ module.exports = (g) =>
 		}
 	}
 
-	function condition(source, a, o, b)
+	async function condition(source, a, o, b)
 	{
-		a = subprocess(source, a);
-		o = subprocess(source, o);
-		b = subprocess(source, b);
+		a = await subprocess(source, a);
+		o = await subprocess(source, o);
+		b = await subprocess(source, b);
 
 		if(UTILS.isNum(a))
 			a = parseFloat(a);
@@ -686,7 +691,7 @@ module.exports = (g) =>
 		}
 	}
 
-	function bodyProcess(source, bodyinfo, bodyindex, limit)
+	async function bodyProcess(source, bodyinfo, bodyindex, limit)
 	{
 		bodyindex = bodyindex || 0;
 		let body = bodyinfo[bodyindex];
@@ -702,17 +707,17 @@ module.exports = (g) =>
 		{
 			if(conds[i-1] && conds[i-1].z)
 			{
-				let z = subprocess(source, conds[i-1].z).toLowerCase();
+				let z = (await subprocess(source, conds[i-1].z)).toLowerCase();
 
 				if(!UTILS.isOneOf(z, ...andor))
 					throw "Cannot connect two conditions by anything other than `and`/`or`. Attempted to use: " + z;
 				else if(z === "and" && cond)
-					cond = cond && condition(source, conds[i].a, conds[i].o, conds[i].b);
+					cond = cond && await condition(source, conds[i].a, conds[i].o, conds[i].b);
 				else if(z === "or")
-					cond = cond || condition(source, conds[i].a, conds[i].o, conds[i].b);
+					cond = cond || await condition(source, conds[i].a, conds[i].o, conds[i].b);
 			}
 			else
-				cond = condition(source, conds[i].a, conds[i].o, conds[i].b);
+				cond = await condition(source, conds[i].a, conds[i].o, conds[i].b);
 		}
 
 		if(cond)
@@ -727,7 +732,7 @@ module.exports = (g) =>
 
 					if(cmd.type === "for" || cmd.type === "foreach")
 					{
-						let init = subprocess(source, cmd.init);
+						let init = await subprocess(source, cmd.init);
 
 						if(!UTILS.isNum(init))
 							throw "Starting value of a For Loop must be a Number. Recieved: " + init;
@@ -736,14 +741,14 @@ module.exports = (g) =>
 
 						if(cmd.type === "foreach")
 						{
-							cmd.arr = UTILS.split(subprocess(source, cmd.arrStr), '\n');
+							cmd.arr = UTILS.split(await subprocess(source, cmd.arrStr), '\n');
 							loc[cmd.elem] = cmd.arr[init-1];
 							cmd.conds[0].b = cmd.arr.length;
 						}
 
 						if(cmd.incStr)
 						{
-							cmd.inc = subprocess(source, cmd.incStr);
+							cmd.inc = await subprocess(source, cmd.incStr);
 
 							if(!UTILS.isInt(cmd.inc))
 								throw "For loop's variable increment is not a number!";
@@ -753,10 +758,10 @@ module.exports = (g) =>
 						}
 					}
 
-					bodyProcess(source, body.commands, i, limit+1);
+					await bodyProcess(source, body.commands, i, limit+1);
 				}
 				else
-					process({
+					await process({
 						content: cmd,
 						member: source.member,
 						guild: source.guild,
@@ -768,7 +773,7 @@ module.exports = (g) =>
 			}
 
 			if(body.type === "while")
-				bodyProcess(source, bodyinfo, bodyindex, limit+1);
+				await bodyProcess(source, bodyinfo, bodyindex, limit+1);
 			else if(body.type === "for" || body.type === "foreach")
 			{
 				if(typeof loc[body.iter] === "string")
@@ -779,7 +784,7 @@ module.exports = (g) =>
 				if(body.type === "foreach")
 					loc[body.elem] = body.arr[loc[body.iter]-1];
 
-				bodyProcess(source, bodyinfo, bodyindex, limit+1);
+				await bodyProcess(source, bodyinfo, bodyindex, limit+1);
 			}
 		}
 		else if(body.type === "if" || body.type === "else")
@@ -787,11 +792,11 @@ module.exports = (g) =>
 			let nextBody = bodyinfo[bodyindex+1];
 
 			if(typeof nextBody === "object" && nextBody.type === "else")
-				bodyProcess(source, bodyinfo, bodyindex+1, limit+1)
+				await bodyProcess(source, bodyinfo, bodyindex+1, limit+1)
 		}
 	}
 
-	register_scmd("end", "", "End Current Body", "End the current body that you're typing commands for.", {runInBodyMode: true}, (chn, source, e, args) =>
+	register_scmd("end", "", "End Current Body", "End the current body that you're typing commands for.", {runInBodyMode: true}, async (chn, source, e, args) =>
 	{
 		let pid = source.member.id;
 		if(!source.locals)
@@ -817,7 +822,7 @@ module.exports = (g) =>
 			if(nonScript)
 				UTILS.printReturn();
 
-			bodyProcess(source, bodyinfo[pid]);
+			await bodyProcess(source, bodyinfo[pid]);
 
 			if(nonScript)
 			{
@@ -968,7 +973,7 @@ module.exports = (g) =>
 			{datatype: "String", oname: "parameter_9", func: (str) => str.setDescription("Set value of {9} if the script uses it.")}
 		]
 	},
-	(chn, source, e, args) =>
+	async (chn, source, e, args) =>
 	{
 		let serverid = source.guild.id;
 		let data = SERVER_DATA[serverid];
@@ -1011,7 +1016,7 @@ module.exports = (g) =>
 			{
 				try
 				{
-					process(subSource);
+					await process(subSource);
 				}
 				catch(err)
 				{
@@ -1021,13 +1026,13 @@ module.exports = (g) =>
 					if(source.member.permissions.has(ELEVATED))
 						subSource.print.txt += "\n-Script Error: " + err + "\nAt line: " + script.lines[i] + "\n\nLocals: " + UTILS.display(subSource.locals) + "\n```";
 					else						
-						subSource.print.txt += "\n-Error: " + err.substring(0, err.length - 1) + "\n```";
+						subSource.print.txt += "\n-Error: " + err + "\n```";
 
 					break;
 				}
 			}
 			else
-				process(subSource);
+				await process(subSource);
 		}
 
 		if(subSource.print.diff)
@@ -1074,7 +1079,7 @@ module.exports = (g) =>
 				tablevel++;
 		}
 
-		UTILS.msg(source, "```" + output + "```", true);
+		UTILS.msg(source, "```\n" + output + "\n```", true);
 	});
 
 	register_scmd(["list_scripts", "listscripts", "scripts", "ls"], "", "List Scripts", "List all scripts. Green ones are user-executable, red ones are admin-only.", (chn, source, e, args) =>

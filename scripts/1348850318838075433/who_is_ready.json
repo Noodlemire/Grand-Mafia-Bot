@@ -1,0 +1,1 @@
+{"userexec":true,"lines":["!foreach plr _ {!players}","!if {!tag {plr} hp} > 0","!if {!is {plr} ready} = True","!echo +{plr}","!else","!echo -{plr}","!end","!end","!end"]}
